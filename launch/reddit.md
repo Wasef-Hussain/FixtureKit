@@ -54,6 +54,6 @@ export const mockUser: User = {
 
 It handles nested objects, arrays, optional fields, union types, and string/number literal unions. Generics and advanced Zod features are intentionally out of scope (they return a clear error, not broken output).
 
-Source: https://github.com/PLACEHOLDER/fixturekit
+Source: https://github.com/Wasef-Hussain/FixtureKit
 
 Would love to hear what schema patterns break it — that's the most useful feedback at this stage.

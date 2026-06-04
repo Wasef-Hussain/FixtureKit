@@ -69,6 +69,6 @@ React 18 · TypeScript 5 · Vite · TypeScript compiler API (in-browser)
 
 ## Source
 
-https://github.com/PLACEHOLDER/fixturekit
+https://github.com/Wasef-Hussain/FixtureKit
 
 Feedback welcome — especially on schema shapes I haven't handled well.

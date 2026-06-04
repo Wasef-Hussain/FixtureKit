@@ -26,4 +26,4 @@ It handles common shapes well: nested objects, optional fields, unions, arrays, 
 
 Would love feedback, especially on the Zod parser edge cases.
 
-**GitHub:** https://github.com/PLACEHOLDER/fixturekit
+**GitHub:** https://github.com/Wasef-Hussain/FixtureKit
