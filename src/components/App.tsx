@@ -40,6 +40,12 @@ export default function App() {
           <OutputPane output={gen.output} />
         </div>
       </div>
+
+      <footer style={S.footer}>
+        <a href="https://github.com/Wasef-Hussain/FixtureKit" target="_blank" rel="noopener noreferrer" style={S.footerLink}>GitHub</a>
+        <span style={S.footerSep}>·</span>
+        <a href="https://github.com/Wasef-Hussain/FixtureKit/issues/new" target="_blank" rel="noopener noreferrer" style={S.footerLink}>Report Issue</a>
+      </footer>
     </div>
   )
 }
@@ -85,5 +91,22 @@ const S: Record<string, React.CSSProperties> = {
     flexDirection: 'column',
     minWidth: 0,
     minHeight: '500px',
+  },
+  footer: {
+    marginTop: '24px',
+    paddingTop: '16px',
+    borderTop: '1px solid #e5e7eb',
+    display: 'flex',
+    gap: '8px',
+    alignItems: 'center',
+  },
+  footerLink: {
+    fontSize: '13px',
+    color: '#6b7280',
+    textDecoration: 'none',
+  },
+  footerSep: {
+    fontSize: '13px',
+    color: '#d1d5db',
   },
 }
