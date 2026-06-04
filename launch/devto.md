@@ -4,7 +4,7 @@
 
 **Tags:** `typescript` `testing` `webdev` `opensource`
 
-**URL:** https://fixturekit.vercel.app
+**URL:** https://fixture-kit.vercel.app
 
 ---
 
@@ -16,7 +16,7 @@ I built **FixtureKit** to fix that — a free developer tool, not a product pitc
 
 Paste a TypeScript `interface`, `type`, or a Zod `z.object(...)` schema → get a copy-ready `export const mock…` TypeScript fixture.
 
-**Try it:** https://fixturekit.vercel.app
+**Try it:** https://fixture-kit.vercel.app
 
 **Input:**
 

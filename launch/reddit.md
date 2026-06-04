@@ -7,7 +7,7 @@
 
 **Title:** I built a browser tool that turns TypeScript interfaces and Zod schemas into fixture/mock code
 
-**URL:** https://fixturekit.vercel.app
+**URL:** https://fixture-kit.vercel.app
 
 ---
 
@@ -19,7 +19,7 @@ I kept writing the same mock objects by hand every time I needed test data, so I
 
 **FixtureKit** — paste a TypeScript interface/type or a Zod schema, get a copy-ready `export const mock…` fixture.
 
-https://fixturekit.vercel.app
+https://fixture-kit.vercel.app
 
 Example: paste this
 

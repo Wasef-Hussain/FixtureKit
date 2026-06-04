@@ -3,7 +3,7 @@
 **Title:**
 Show HN: FixtureKit – TypeScript interface or Zod schema → export const mock fixture
 
-**URL:** https://fixturekit.vercel.app
+**URL:** https://fixture-kit.vercel.app
 
 ---
 
@@ -13,7 +13,7 @@ I got tired of hand-writing mock objects for tests. The first thing I reach for 
 
 FixtureKit is a free browser tool that generates `export const mock…` TypeScript fixtures from TypeScript interfaces/types or Zod schemas. You paste your schema, tune the count (1–5), and copy the output.
 
-https://fixturekit.vercel.app
+https://fixture-kit.vercel.app
 
 A few things I cared about while building it:
 

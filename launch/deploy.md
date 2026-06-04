@@ -26,7 +26,7 @@ npx vercel link
 npx vercel --prod
 ```
 
-When prompted for project name, use `fixturekit` to get `https://fixturekit.vercel.app`.
+Live URL: `https://fixture-kit.vercel.app`
 
 If `VERCEL_TOKEN` is set in your environment and deploy fails with "token is not valid", unset it first:
 

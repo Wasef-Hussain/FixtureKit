@@ -2,7 +2,7 @@
 
 **Paste a TypeScript interface or Zod schema. Get copy-ready fixture code.**
 
-**Live:** https://fixturekit.vercel.app · **GitHub:** https://github.com/Wasef-Hussain/FixtureKit
+**Live:** https://fixture-kit.vercel.app · **GitHub:** https://github.com/Wasef-Hussain/FixtureKit
 
 FixtureKit is a browser-based tool that generates `export const mock…` TypeScript fixtures from your type definitions — no libraries, no setup, no backend.
 
