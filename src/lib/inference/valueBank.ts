@@ -213,3 +213,28 @@ export const VALUE_BANK: Record<SemanticCategory, ValuePool> = {
     '10.10.10.10', '203.0.113.42', '198.51.100.15', '192.0.2.1',
   ],
 }
+
+// ---------------------------------------------------------------------------
+// Adversarial value pools (V2.1)
+// ---------------------------------------------------------------------------
+// When isAdversarial mode is enabled, these pools are sampled at 60 %
+// probability for primitive string / number fields to smoke-test XSS,
+// SQLi, and numeric boundary resilience.
+
+export const ADVERSARIAL_XSS: readonly string[] = [
+  '<script>alert(1)</script>',
+  '"><img src=x onerror=alert(1)>',
+  'javascript:alert(1)',
+]
+
+export const ADVERSARIAL_SQLI: readonly string[] = [
+  "' OR 1=1--",
+  "'; DROP TABLE users;--",
+]
+
+export const ADVERSARIAL_BOUNDARIES: readonly (string | number)[] = [
+  'A'.repeat(5000),
+  0,
+  -1,
+  Number.MAX_SAFE_INTEGER,
+]

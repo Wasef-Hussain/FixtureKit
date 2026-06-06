@@ -1,27 +1,19 @@
-# User Feedback
-
-Track all feedback from Reddit, HN, DEV.to, GitHub Issues.
-Format: source, date, description.
-
----
-
-## Bugs
-
-<!-- Example:
-### Partial<User> unsupported
-- Source: r/typescript
-- Date: 2026-06-05
--->
+# Feedback
 
 ## Feature Requests
+- Randomized fixture generation
+- Larger datasets (10, 50, 100+)
+- Effect Schema support
 
-<!-- Example:
-### Export as JSON
-- Source: HN
-- Date: 2026-06-05
-- Notes: multiple people asked
--->
+## Research
+- Property-based testing ecosystem
+  - Effect Schema Arbitrary
+  - fast-check
 
-## Positive Signals
+## Unsupported types users mention
+- Partial<T>
+- Pick<T>
+- Omit<T>
 
-<!-- Stars, shares, comments saying it worked for them -->
+## Bugs
+- (none yet)

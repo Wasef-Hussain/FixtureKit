@@ -1,16 +1,69 @@
 import { useState } from 'react'
+import type { FixtureOutput } from '../lib/generator/generateFixture'
+import type { OutputTab } from '../hooks/useFixtureGen'
 
 interface Props {
-  output: string
+  output: FixtureOutput | null
+  activeTab: OutputTab
+  onTabChange: (tab: OutputTab) => void
 }
 
-export default function OutputPane({ output }: Props) {
+const ALL_TABS: OutputTab[] = ['ts', 'json', 'msw', 'playwright']
+
+const TAB_META: Record<OutputTab, { label: string; ext: string; mime: string }> = {
+  ts:          { label: '.ts',         ext: '.ts',          mime: 'text/typescript' },
+  json:        { label: '.json',       ext: '.json',        mime: 'application/json' },
+  msw:         { label: '.msw',        ext: '.handler.ts',  mime: 'text/typescript' },
+  playwright:  { label: '.playwright', ext: '.spec.ts',     mime: 'text/typescript' },
+}
+
+export default function OutputPane({ output, activeTab, onTabChange }: Props) {
+  const empty = output === null
+  const activeCode = empty ? '' : output[activeTab]
+
+  return (
+    <div style={styles.wrapper}>
+      {/* --- Tab row --- */}
+      <div style={styles.tabRow}>
+        {ALL_TABS.map((tab) => (
+          <button
+            key={tab}
+            onClick={() => onTabChange(tab)}
+            style={{
+              ...styles.tab,
+              ...(activeTab === tab ? styles.tabActive : {}),
+            }}
+          >
+            {TAB_META[tab].label}
+          </button>
+        ))}
+        <span style={styles.spacer} />
+        <CopyBtn code={activeCode} disabled={empty} />
+        <DownloadBtn code={activeCode} disabled={empty} meta={TAB_META[activeTab]} />
+      </div>
+
+      {/* --- Code display --- */}
+      <pre style={styles.codeBlock}>
+        {empty ? (
+          <span style={styles.placeholder}>Generated fixture will appear here</span>
+        ) : (
+          <code>{activeCode}</code>
+        )}
+      </pre>
+    </div>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Sub-components
+// ---------------------------------------------------------------------------
+
+function CopyBtn({ code, disabled }: { code: string; disabled: boolean }) {
   const [copied, setCopied] = useState(false)
-  const empty = output.length === 0
 
   function handleCopy() {
-    if (empty) return
-    navigator.clipboard.writeText(output).then(
+    if (disabled) return
+    navigator.clipboard.writeText(code).then(
       () => {
         setCopied(true)
         setTimeout(() => setCopied(false), 1500)
@@ -18,7 +71,7 @@ export default function OutputPane({ output }: Props) {
       () => {
         // Fallback for older browsers / non-HTTPS
         const ta = document.createElement('textarea')
-        ta.value = output
+        ta.value = code
         ta.style.position = 'fixed'
         ta.style.opacity = '0'
         document.body.appendChild(ta)
@@ -31,13 +84,33 @@ export default function OutputPane({ output }: Props) {
     )
   }
 
+  return (
+    <button
+      style={{ ...styles.actionBtn, ...(copied ? styles.btnCopied : {}) }}
+      onClick={handleCopy}
+      disabled={disabled}
+    >
+      {copied ? 'Copied!' : 'Copy'}
+    </button>
+  )
+}
+
+function DownloadBtn({
+  code,
+  disabled,
+  meta,
+}: {
+  code: string
+  disabled: boolean
+  meta: { ext: string; mime: string }
+}) {
   function handleDownload() {
-    if (empty) return
-    const blob = new Blob([output], { type: 'text/typescript' })
+    if (disabled) return
+    const blob = new Blob([code], { type: meta.mime })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = 'fixture.ts'
+    a.download = `fixture${meta.ext}`
     document.body.appendChild(a)
     a.click()
     document.body.removeChild(a)
@@ -45,65 +118,64 @@ export default function OutputPane({ output }: Props) {
   }
 
   return (
-    <div style={styles.wrapper}>
-      <div style={styles.toolbar}>
-        <span style={styles.label}>Output</span>
-        <div style={styles.buttons}>
-          <button
-            style={{ ...styles.btn, ...(copied ? styles.btnCopied : {}) }}
-            onClick={handleCopy}
-            disabled={empty}
-          >
-            {copied ? 'Copied!' : 'Copy'}
-          </button>
-          <button style={styles.btn} onClick={handleDownload} disabled={empty}>
-            Download .ts
-          </button>
-        </div>
-      </div>
-
-      <pre style={styles.codeBlock}>
-        {empty ? (
-          <span style={styles.placeholder}>Generated fixture will appear here</span>
-        ) : (
-          <code>{output}</code>
-        )}
-      </pre>
-    </div>
+    <button style={styles.actionBtn} onClick={handleDownload} disabled={disabled}>
+      Download{meta.ext}
+    </button>
   )
 }
+
+// ---------------------------------------------------------------------------
+// Styles
+// ---------------------------------------------------------------------------
 
 const styles: Record<string, React.CSSProperties> = {
   wrapper: {
     display: 'flex',
     flexDirection: 'column',
-    gap: '12px',
+    gap: '0',
     height: '100%',
   },
-  toolbar: {
+  tabRow: {
     display: 'flex',
-    justifyContent: 'space-between',
     alignItems: 'center',
+    gap: '0',
+    borderBottom: '1px solid #d1d5db',
+    marginBottom: '12px',
   },
-  label: {
-    fontSize: '14px',
+  tab: {
+    padding: '8px 16px',
+    fontSize: '12px',
+    fontFamily: '"Fira Code", "Cascadia Code", "JetBrains Mono", monospace',
     fontWeight: 600,
-    color: '#374151',
+    textTransform: 'uppercase',
+    letterSpacing: '0.5px',
+    border: 'none',
+    borderBottom: '2px solid transparent',
+    background: 'transparent',
+    color: '#6b7280',
+    cursor: 'pointer',
+    outline: 'none',
+    transition: 'color 0.15s, border-color 0.15s',
   },
-  buttons: {
-    display: 'flex',
-    gap: '8px',
+  tabActive: {
+    color: '#2563eb',
+    borderBottomColor: '#2563eb',
   },
-  btn: {
-    padding: '6px 14px',
-    fontSize: '13px',
+  spacer: {
+    flex: 1,
+  },
+  actionBtn: {
+    padding: '5px 12px',
+    fontSize: '12px',
     fontFamily: 'inherit',
+    fontWeight: 500,
     border: '1px solid #d1d5db',
     borderRadius: '6px',
     background: '#ffffff',
     color: '#374151',
     cursor: 'pointer',
     outline: 'none',
+    marginLeft: '8px',
   },
   btnCopied: {
     background: '#10b981',

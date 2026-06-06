@@ -5,32 +5,41 @@
 //   mode             — "ts" | "zod"
 //   count            — number of fixtures (1–5)
 //   customVarName    — optional override for the const name
+//   isAdversarial    — adversarial mode toggle (V2.1)
+//   activeTab        — current output format tab (V2.1)
 //
 // Derived (computed automatically):
-//   output           — formatted TypeScript fixture string
+//   output           — FixtureOutput object with all 4 formats (null when empty/error)
 //   error            — parse error message (null when input is empty or valid)
 //   loading          — true while the TS parser is being lazy-loaded
 
 import { useState, useEffect, useRef } from 'react'
 import type { ParseResult } from '../lib/types'
-import { generateFixture } from '../lib/generator/generateFixture'
+import { generateFixture, type FixtureOutput } from '../lib/generator/generateFixture'
 // Zod parser is lightweight (no dependencies) — import eagerly.
 import { parseZod } from '../lib/parser/parseZod'
 
 export type Mode = 'ts' | 'zod'
 
+/** Available output format tabs. */
+export type OutputTab = 'ts' | 'json' | 'msw' | 'playwright'
+
 export interface FixtureGenState {
-  output: string
+  output: FixtureOutput | null
   error: string | null
   loading: boolean
   inputText: string
   mode: Mode
   count: number
   customVarName: string
+  isAdversarial: boolean
+  activeTab: OutputTab
   setInputText: (s: string) => void
   setMode: (m: Mode) => void
   setCount: (n: number) => void
   setCustomVarName: (s: string) => void
+  setIsAdversarial: (b: boolean) => void
+  setActiveTab: (t: OutputTab) => void
 }
 
 const DEBOUNCE_MS = 300
@@ -41,7 +50,9 @@ export function useFixtureGen(): FixtureGenState {
   const [mode, setMode] = useState<Mode>('ts')
   const [count, setCount] = useState(1)
   const [customVarName, setCustomVarName] = useState('')
-  const [output, setOutput] = useState('')
+  const [isAdversarial, setIsAdversarial] = useState(false)
+  const [activeTab, setActiveTab] = useState<OutputTab>('ts')
+  const [output, setOutput] = useState<FixtureOutput | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
 
@@ -53,6 +64,8 @@ export function useFixtureGen(): FixtureGenState {
   varNameRef.current = customVarName
   const modeRef = useRef(mode)
   modeRef.current = mode
+  const adversarialRef = useRef(isAdversarial)
+  adversarialRef.current = isAdversarial
 
   // Lazy-loaded TS parser. Null until first use.
   const tsParserRef = useRef<((source: string) => ParseResult) | null>(null)
@@ -63,10 +76,11 @@ export function useFixtureGen(): FixtureGenState {
       const currentMode = modeRef.current
       const currentCount = countRef.current
       const currentVarName = varNameRef.current
+      const currentAdversarial = adversarialRef.current
 
       // Empty input → clear output and error, nothing to show.
       if (!text.trim()) {
-        setOutput('')
+        setOutput(null)
         setError(null)
         return
       }
@@ -78,24 +92,25 @@ export function useFixtureGen(): FixtureGenState {
             tsParserRef.current = mod.parseTypeScript
             setLoading(false)
             // Re-run once the parser is ready.
-            runPipeline(text, 'ts', currentCount, currentVarName)
+            runPipeline(text, 'ts', currentCount, currentVarName, currentAdversarial)
           })
           return
         }
-        runPipeline(text, 'ts', currentCount, currentVarName)
+        runPipeline(text, 'ts', currentCount, currentVarName, currentAdversarial)
       } else {
-        runPipeline(text, 'zod', currentCount, currentVarName)
+        runPipeline(text, 'zod', currentCount, currentVarName, currentAdversarial)
       }
     }, DEBOUNCE_MS)
 
     return () => clearTimeout(timer)
-  }, [inputText, mode, count, customVarName])
+  }, [inputText, mode, count, customVarName, isAdversarial])
 
   function runPipeline(
     source: string,
     currentMode: Mode,
     currentCount: number,
     currentVarName: string,
+    currentAdversarial: boolean,
   ) {
     let result: ParseResult
     if (currentMode === 'ts') {
@@ -106,7 +121,7 @@ export function useFixtureGen(): FixtureGenState {
 
     if (!result.ok) {
       setError(result.error)
-      setOutput('')
+      setOutput(null)
       return
     }
 
@@ -116,7 +131,7 @@ export function useFixtureGen(): FixtureGenState {
     const trimmedVarName = currentVarName.trim()
     if (trimmedVarName.length > 0 && !IDENTIFIER_RE.test(trimmedVarName)) {
       setError('Variable name must be a valid identifier (letters, digits, $, _ — cannot start with a digit).')
-      setOutput('')
+      setOutput(null)
       return
     }
 
@@ -137,6 +152,7 @@ export function useFixtureGen(): FixtureGenState {
       typeName,
       fields: result.fields,
       count: currentCount,
+      isAdversarial: currentAdversarial,
     })
 
     setOutput(generated)
@@ -150,9 +166,13 @@ export function useFixtureGen(): FixtureGenState {
     mode,
     count,
     customVarName,
+    isAdversarial,
+    activeTab,
     setInputText,
     setMode,
     setCount,
     setCustomVarName,
+    setIsAdversarial,
+    setActiveTab,
   }
 }

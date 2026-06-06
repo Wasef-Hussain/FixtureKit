@@ -20,6 +20,8 @@ export default function App() {
         onCountChange={gen.setCount}
         varName={gen.customVarName}
         onVarNameChange={gen.setCustomVarName}
+        isAdversarial={gen.isAdversarial}
+        onAdversarialChange={gen.setIsAdversarial}
         disabled={gen.loading}
       />
 
@@ -37,7 +39,11 @@ export default function App() {
         </div>
 
         <div style={S.pane}>
-          <OutputPane output={gen.output} />
+          <OutputPane
+            output={gen.output}
+            activeTab={gen.activeTab}
+            onTabChange={gen.setActiveTab}
+          />
         </div>
       </div>
 

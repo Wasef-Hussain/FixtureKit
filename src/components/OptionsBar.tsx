@@ -3,10 +3,20 @@ interface Props {
   onCountChange: (n: number) => void
   varName: string
   onVarNameChange: (s: string) => void
+  isAdversarial: boolean
+  onAdversarialChange: (b: boolean) => void
   disabled: boolean
 }
 
-export default function OptionsBar({ count, onCountChange, varName, onVarNameChange, disabled }: Props) {
+export default function OptionsBar({
+  count,
+  onCountChange,
+  varName,
+  onVarNameChange,
+  isAdversarial,
+  onAdversarialChange,
+  disabled,
+}: Props) {
   return (
     <div style={styles.row}>
       <label style={styles.label}>Fixtures</label>
@@ -33,6 +43,17 @@ export default function OptionsBar({ count, onCountChange, varName, onVarNameCha
         spellCheck={false}
         disabled={disabled}
       />
+
+      <label style={{ ...styles.label, marginLeft: '20px', display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
+        <input
+          type="checkbox"
+          checked={isAdversarial}
+          onChange={(e) => onAdversarialChange(e.target.checked)}
+          disabled={disabled}
+          style={styles.checkbox}
+        />
+        Adversarial
+      </label>
     </div>
   )
 }
@@ -60,7 +81,7 @@ const styles: Record<string, React.CSSProperties> = {
     border: '1px solid #d1d5db',
     borderRadius: '6px',
     outline: 'none',
-    textAlign: 'center',
+    textAlign: 'center' as const,
   },
   varInput: {
     width: '180px',
@@ -70,5 +91,11 @@ const styles: Record<string, React.CSSProperties> = {
     border: '1px solid #d1d5db',
     borderRadius: '6px',
     outline: 'none',
+  },
+  checkbox: {
+    width: '16px',
+    height: '16px',
+    cursor: 'pointer',
+    accentColor: '#2563eb',
   },
 }

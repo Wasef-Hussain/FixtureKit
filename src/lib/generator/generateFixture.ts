@@ -1,11 +1,12 @@
-// Generator layer: IR + inferred values → formatted TypeScript source string.
+// Generator layer: IR + inferred values → multi-format fixture output.
 //
 // Pipeline:
-//   resolveInstance(fields, index)  →  plain JS object tree  (runs inference)
-//   serializeValue(value, level)    →  TypeScript source string  (pure formatting)
-//   generateFixture(opts)           →  full export declaration   (assembles both)
+//   resolveInstance(fields, index, isAdversarial)  →  plain JS object tree
+//   serializeValue(value, level)                    →  TypeScript source string
+//   buildOutput(data, opts)                         →  { ts, json, msw, playwright }
+//   generateFixture(opts)                           →  FixtureOutput
 //
-// Output is deterministic: same fields + same options → identical string every time.
+// Output is deterministic: same fields + same options → identical strings every time.
 
 import type { Field } from '../types'
 import { inferValue } from '../inference/inferValue'
@@ -27,6 +28,20 @@ export interface GenerateOptions {
   fields: Field[]
   /** Number of fixture instances to generate (1–5). */
   count: number
+  /** When true, injects adversarial values into the fixture data (V2.1). */
+  isAdversarial?: boolean
+}
+
+/** The four output formats produced by the generator. */
+export interface FixtureOutput {
+  /** Raw TypeScript export declaration (original V1 format). */
+  ts: string
+  /** Pretty-printed JSON (JSON.stringify with 2-space indent). */
+  json: string
+  /** MSW v2 handler wrapping the generated data. */
+  msw: string
+  /** Playwright route.fulfill() block wrapping the generated data. */
+  playwright: string
 }
 
 // ---------------------------------------------------------------------------
@@ -60,6 +75,15 @@ function escapeString(s: string): string {
     .replace(/\n/g, '\\n')
     .replace(/\r/g, '\\r')
     .replace(/\t/g, '\\t')
+}
+
+// Indent every line of a multi-line string by the given number of spaces.
+function indentLines(text: string, spaces: number): string {
+  const prefix = ' '.repeat(spaces)
+  return text
+    .split('\n')
+    .map(line => prefix + line)
+    .join('\n')
 }
 
 // Recursively convert a plain JS value (output of inferValue) to a TypeScript
@@ -96,12 +120,66 @@ function serializeValue(value: unknown, level: number): string {
 
 // Run inference on all fields at a given instance index, returning a plain
 // JS object. This is the only place that touches inferValue.
-function resolveInstance(fields: Field[], index: number): Record<string, unknown> {
+function resolveInstance(
+  fields: Field[],
+  index: number,
+  isAdversarial: boolean,
+): Record<string, unknown> {
   const obj: Record<string, unknown> = {}
   for (const field of fields) {
-    obj[field.name] = inferValue(field, index)
+    obj[field.name] = inferValue(field, index, 0, isAdversarial)
   }
   return obj
+}
+
+// ---------------------------------------------------------------------------
+// Multi-format builder
+// ---------------------------------------------------------------------------
+
+type Data = Record<string, unknown> | Record<string, unknown>[]
+
+function buildOutput(data: Data, opts: GenerateOptions): FixtureOutput {
+  const count = Math.max(1, Math.min(5, Math.round(opts.count)))
+
+  // --- TS ---
+  const annotation = opts.typeName ? `: ${opts.typeName}` : ''
+  let ts: string
+
+  if (count === 1) {
+    ts = `export const ${opts.varName}${annotation} = ${serializeValue(data, 0)}\n`
+  } else {
+    const varName = pluralize(opts.varName)
+    const annotationArr = opts.typeName ? `: ${opts.typeName}[]` : ''
+    const items = (data as Record<string, unknown>[]).map(
+      item => `${ind(1)}${serializeValue(item, 1)}`,
+    )
+    ts = `export const ${varName}${annotationArr} = [\n${items.join(',\n')},\n]\n`
+  }
+
+  // --- JSON ---
+  const json = JSON.stringify(data, null, 2)
+
+  // --- MSW ---
+  const mswHandlerName = `${opts.varName}Handler`
+  const msw = [
+    "import { http, HttpResponse } from 'msw'\n",
+    `export const ${mswHandlerName} = http.get('/api/endpoint', () => {`,
+    `  return HttpResponse.json(\n${indentLines(json, 4)}\n  )`,
+    '})\n',
+  ].join('\n')
+
+  // --- Playwright ---
+  const playwright = [
+    "await page.route('**/api/endpoint', async (route) => {",
+    '  await route.fulfill({',
+    '    status: 200,',
+    "    contentType: 'application/json',",
+    `    body: JSON.stringify(\n${indentLines(json, 6)}\n    ),`,
+    '  });',
+    '});\n',
+  ].join('\n')
+
+  return { ts, json, msw, playwright }
 }
 
 // ---------------------------------------------------------------------------
@@ -109,41 +187,22 @@ function resolveInstance(fields: Field[], index: number): Record<string, unknown
 // ---------------------------------------------------------------------------
 
 /**
- * Generate a TypeScript fixture string from IR fields.
+ * Generate fixture output in all four formats.
  *
- * Single instance (count = 1):
- *   export const mockUser: User = {
- *     id: "f47ac10b-...",
- *     name: "Alice Johnson",
- *   }
- *
- * Multiple instances (count > 1):
- *   export const mockUsers: User[] = [
- *     {
- *       id: "f47ac10b-...",
- *       name: "Alice Johnson",
- *     },
- *     {
- *       id: "550e8400-...",
- *       name: "Bob Smith",
- *     },
- *   ]
+ * @returns A FixtureOutput object with `ts`, `json`, `msw`, and `playwright` keys —
+ *          each containing the formatted fixture string for that format.
  */
-export function generateFixture(opts: GenerateOptions): string {
+export function generateFixture(opts: GenerateOptions): FixtureOutput {
   const count = Math.max(1, Math.min(5, Math.round(opts.count)))
+  const isAdversarial = opts.isAdversarial ?? false
 
   if (count === 1) {
-    const value = resolveInstance(opts.fields, 0)
-    const annotation = opts.typeName ? `: ${opts.typeName}` : ''
-    return `export const ${opts.varName}${annotation} = ${serializeValue(value, 0)}\n`
+    const data = resolveInstance(opts.fields, 0, isAdversarial)
+    return buildOutput(data, opts)
   }
 
-  // Multiple instances → array
-  const varName  = pluralize(opts.varName)
-  const annotation = opts.typeName ? `: ${opts.typeName}[]` : ''
-  const items = Array.from({ length: count }, (_, i) => {
-    const value = resolveInstance(opts.fields, i)
-    return `${ind(1)}${serializeValue(value, 1)}`
-  })
-  return `export const ${varName}${annotation} = [\n${items.join(',\n')},\n]\n`
+  const data = Array.from({ length: count }, (_, i) =>
+    resolveInstance(opts.fields, i, isAdversarial),
+  )
+  return buildOutput(data, opts)
 }
