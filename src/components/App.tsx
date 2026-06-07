@@ -36,6 +36,9 @@ export default function App() {
         onVarNameChange={gen.setCustomVarName}
         isAdversarial={gen.isAdversarial}
         onAdversarialChange={gen.setIsAdversarial}
+        isRandomized={gen.isRandomized}
+        onRandomizedChange={gen.setIsRandomized}
+        onShuffle={gen.shuffle}
         disabled={gen.loading}
       />
 

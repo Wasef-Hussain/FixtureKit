@@ -7,6 +7,9 @@ interface Props {
   onVarNameChange: (s: string) => void
   isAdversarial: boolean
   onAdversarialChange: (b: boolean) => void
+  isRandomized: boolean
+  onRandomizedChange: (b: boolean) => void
+  onShuffle: () => void
   disabled: boolean
 }
 
@@ -19,6 +22,9 @@ export default function OptionsBar({
   onVarNameChange,
   isAdversarial,
   onAdversarialChange,
+  isRandomized,
+  onRandomizedChange,
+  onShuffle,
   disabled,
 }: Props) {
   return (
@@ -31,10 +37,10 @@ export default function OptionsBar({
           value={count}
           onChange={(e) => {
             const n = Number(e.target.value)
-            if (n >= 1 && n <= 5) onCountChange(n)
+            if (n >= 1 && n <= 100) onCountChange(n)
           }}
           min={1}
-          max={5}
+          max={100}
           disabled={disabled}
         />
       </div>
@@ -79,6 +85,44 @@ export default function OptionsBar({
             <span style={styles.adversarialHint}>XSS · SQLi · edge cases</span>
           </span>
         </div>
+      </div>
+
+      <div style={styles.divider} />
+
+      <div style={styles.group}>
+        <div style={styles.adversarialLabel} title="Generate completely random data on every shuffle">
+          <button
+            type="button"
+            role="switch"
+            aria-checked={isRandomized}
+            style={{
+              ...styles.switch,
+              ...(isRandomized ? styles.switchOn : {}),
+            }}
+            onClick={() => !disabled && onRandomizedChange(!isRandomized)}
+            disabled={disabled}
+          >
+            <span style={{
+              ...styles.switchThumb,
+              ...(isRandomized ? styles.switchThumbOn : {}),
+            }} />
+          </button>
+          <span>
+            <span style={styles.adversarialTitle}>Randomized data</span>
+            <span style={styles.adversarialHint}>Non-deterministic</span>
+          </span>
+        </div>
+        {isRandomized && (
+          <button
+            type="button"
+            onClick={onShuffle}
+            disabled={disabled}
+            style={styles.shuffleButton}
+            title="Shuffle data"
+          >
+            🔀 Shuffle
+          </button>
+        )}
       </div>
     </div>
   )
@@ -191,5 +235,19 @@ const styles: Record<string, React.CSSProperties> = {
   },
   switchThumbOn: {
     transform: 'translateX(18px)',
+  },
+  shuffleButton: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '4px',
+    padding: '4px 8px',
+    fontSize: '12px',
+    fontWeight: 600,
+    color: color.accent,
+    background: color.accentSoft,
+    border: `1px solid rgba(79, 70, 229, 0.2)`,
+    borderRadius: radius.md,
+    cursor: 'pointer',
+    outline: 'none',
   },
 }

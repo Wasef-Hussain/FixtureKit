@@ -94,6 +94,7 @@ function typeBasedValue(
   index: number,
   depth: number,
   isAdversarial = false,
+  baseSeed = 0,
 ): unknown {
   switch (type.kind) {
     case 'string':
@@ -128,7 +129,7 @@ function typeBasedValue(
       // V1 rule: always pick the first non-null, non-undefined type.
       const preferred = type.types.find(t => t.kind !== 'null' && t.kind !== 'undefined')
       const chosen = preferred ?? type.types[0]
-      return typeBasedValue(chosen, fieldName, index, depth, isAdversarial)
+      return typeBasedValue(chosen, fieldName, index, depth, isAdversarial, baseSeed)
     }
 
     case 'array': {
@@ -139,6 +140,7 @@ function typeBasedValue(
           index + i,
           depth + 1,
           isAdversarial,
+          baseSeed,
         ),
       )
     }
@@ -147,7 +149,7 @@ function typeBasedValue(
       if (depth >= MAX_DEPTH) return {}
       const obj: Record<string, unknown> = {}
       for (const f of type.fields) {
-        obj[f.name] = inferValue(f, index, depth + 1, isAdversarial)
+        obj[f.name] = inferValue(f, index, depth + 1, isAdversarial, baseSeed)
       }
       return obj
     }
@@ -171,17 +173,18 @@ export function inferValue(
   index: number,
   depth = 0,
   isAdversarial = false,
+  baseSeed = 0,
 ): unknown {
   // Handle depth limit before any further work
   if (depth >= MAX_DEPTH) {
-    return typeBasedValue(field.type, field.name, index, depth, isAdversarial)
+    return typeBasedValue(field.type, field.name, index, depth, isAdversarial, baseSeed)
   }
 
   // Adversarial: 30 % chance to emit null/undefined for optional fields.
   // Uses a distinct seed offset (9999) so the null/undefined decision is
   // independent from the adversarial pool selection.
   if (isAdversarial && field.optional) {
-    const optSeed = hashStr(field.name) + index + 9999
+    const optSeed = hashStr(field.name) + index + 9999 + baseSeed
     if (optSeed % 100 < 30) {
       return optSeed % 2 === 0 ? null : undefined
     }
@@ -191,7 +194,7 @@ export function inferValue(
   // Uses a distinct seed offset (7777) so adversarial pool selection and
   // happy-path pool selection never share the same seed.
   if (isAdversarial) {
-    const advSeed = hashStr(field.name) + index + 7777
+    const advSeed = hashStr(field.name) + index + 7777 + baseSeed
     if (advSeed % 100 < 60) {
       const adv = pickAdversarialValue(field.type, advSeed)
       if (adv !== undefined) return adv
@@ -202,10 +205,10 @@ export function inferValue(
   // in the remaining 40 % of cases when isAdversarial is true.
   const category = getSemanticCategory(field.name)
   if (category !== null && isCategoryCompatible(category, field.type)) {
-    const seed = hashStr(field.name) + index
+    const seed = hashStr(field.name) + index + baseSeed
     return pickFromCategory(category, seed)
   }
 
   // Tier 3: type-based fallback
-  return typeBasedValue(field.type, field.name, index, depth, isAdversarial)
+  return typeBasedValue(field.type, field.name, index, depth, isAdversarial, baseSeed)
 }

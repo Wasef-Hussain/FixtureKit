@@ -13,7 +13,7 @@
 //   error            — parse error message (null when input is empty or valid)
 //   loading          — true while the TS parser is being lazy-loaded
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import type { ParseResult } from '../lib/types'
 import { generateFixture, type FixtureOutput } from '../lib/generator/generateFixture'
 // Zod parser is lightweight (no dependencies) — import eagerly.
@@ -33,12 +33,16 @@ export interface FixtureGenState {
   count: number
   customVarName: string
   isAdversarial: boolean
+  isRandomized: boolean
+  baseSeed: number
   activeTab: OutputTab
   setInputText: (s: string) => void
   setMode: (m: Mode) => void
   setCount: (n: number) => void
   setCustomVarName: (s: string) => void
   setIsAdversarial: (b: boolean) => void
+  setIsRandomized: (b: boolean) => void
+  shuffle: () => void
   setActiveTab: (t: OutputTab) => void
 }
 
@@ -51,10 +55,25 @@ export function useFixtureGen(): FixtureGenState {
   const [count, setCount] = useState(1)
   const [customVarName, setCustomVarName] = useState('')
   const [isAdversarial, setIsAdversarial] = useState(false)
+  const [isRandomized, setIsRandomized] = useState(false)
+  const [baseSeed, setBaseSeed] = useState(0)
   const [activeTab, setActiveTab] = useState<OutputTab>('ts')
   const [output, setOutput] = useState<FixtureOutput | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+
+  const shuffle = useCallback(() => {
+    setBaseSeed(Math.floor(Math.random() * 1000000))
+  }, [])
+
+  // Auto-shuffle when randomized mode is toggled on
+  useEffect(() => {
+    if (isRandomized) {
+      shuffle()
+    } else {
+      setBaseSeed(0)
+    }
+  }, [isRandomized, shuffle])
 
   // Refs for values consumed inside the debounced effect — avoids stale closures
   // while still letting the effect re-fire when these change.
@@ -66,6 +85,10 @@ export function useFixtureGen(): FixtureGenState {
   modeRef.current = mode
   const adversarialRef = useRef(isAdversarial)
   adversarialRef.current = isAdversarial
+  const randomizedRef = useRef(isRandomized)
+  randomizedRef.current = isRandomized
+  const baseSeedRef = useRef(baseSeed)
+  baseSeedRef.current = baseSeed
 
   // Lazy-loaded TS parser. Null until first use.
   const tsParserRef = useRef<((source: string) => ParseResult) | null>(null)
@@ -77,6 +100,8 @@ export function useFixtureGen(): FixtureGenState {
       const currentCount = countRef.current
       const currentVarName = varNameRef.current
       const currentAdversarial = adversarialRef.current
+      const currentRandomized = randomizedRef.current
+      const currentBaseSeed = baseSeedRef.current
 
       // Empty input → clear output and error, nothing to show.
       if (!text.trim()) {
@@ -92,18 +117,18 @@ export function useFixtureGen(): FixtureGenState {
             tsParserRef.current = mod.parseTypeScript
             setLoading(false)
             // Re-run once the parser is ready.
-            runPipeline(text, 'ts', currentCount, currentVarName, currentAdversarial)
+            runPipeline(text, 'ts', currentCount, currentVarName, currentAdversarial, currentBaseSeed)
           })
           return
         }
-        runPipeline(text, 'ts', currentCount, currentVarName, currentAdversarial)
+        runPipeline(text, 'ts', currentCount, currentVarName, currentAdversarial, currentBaseSeed)
       } else {
-        runPipeline(text, 'zod', currentCount, currentVarName, currentAdversarial)
+        runPipeline(text, 'zod', currentCount, currentVarName, currentAdversarial, currentBaseSeed)
       }
     }, DEBOUNCE_MS)
 
     return () => clearTimeout(timer)
-  }, [inputText, mode, count, customVarName, isAdversarial])
+  }, [inputText, mode, count, customVarName, isAdversarial, isRandomized, baseSeed])
 
   function runPipeline(
     source: string,
@@ -111,6 +136,7 @@ export function useFixtureGen(): FixtureGenState {
     currentCount: number,
     currentVarName: string,
     currentAdversarial: boolean,
+    currentBaseSeed: number,
   ) {
     let result: ParseResult
     if (currentMode === 'ts') {
@@ -153,6 +179,7 @@ export function useFixtureGen(): FixtureGenState {
       fields: result.fields,
       count: currentCount,
       isAdversarial: currentAdversarial,
+      baseSeed: currentBaseSeed,
     })
 
     setOutput(generated)
@@ -167,12 +194,16 @@ export function useFixtureGen(): FixtureGenState {
     count,
     customVarName,
     isAdversarial,
+    isRandomized,
+    baseSeed,
     activeTab,
     setInputText,
     setMode,
     setCount,
     setCustomVarName,
     setIsAdversarial,
+    setIsRandomized,
+    shuffle,
     setActiveTab,
   }
 }

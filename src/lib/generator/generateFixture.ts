@@ -30,6 +30,8 @@ export interface GenerateOptions {
   count: number
   /** When true, injects adversarial values into the fixture data (V2.1). */
   isAdversarial?: boolean
+  /** Base seed offset for randomized mode. Default: 0 */
+  baseSeed?: number
 }
 
 /** The four output formats produced by the generator. */
@@ -124,10 +126,11 @@ function resolveInstance(
   fields: Field[],
   index: number,
   isAdversarial: boolean,
+  baseSeed: number,
 ): Record<string, unknown> {
   const obj: Record<string, unknown> = {}
   for (const field of fields) {
-    obj[field.name] = inferValue(field, index, 0, isAdversarial)
+    obj[field.name] = inferValue(field, index, 0, isAdversarial, baseSeed)
   }
   return obj
 }
@@ -139,7 +142,7 @@ function resolveInstance(
 type Data = Record<string, unknown> | Record<string, unknown>[]
 
 function buildOutput(data: Data, opts: GenerateOptions): FixtureOutput {
-  const count = Math.max(1, Math.min(5, Math.round(opts.count)))
+  const count = Math.max(1, Math.min(100, Math.round(opts.count)))
 
   // --- TS ---
   const annotation = opts.typeName ? `: ${opts.typeName}` : ''
@@ -193,16 +196,17 @@ function buildOutput(data: Data, opts: GenerateOptions): FixtureOutput {
  *          each containing the formatted fixture string for that format.
  */
 export function generateFixture(opts: GenerateOptions): FixtureOutput {
-  const count = Math.max(1, Math.min(5, Math.round(opts.count)))
+  const count = Math.max(1, Math.min(100, Math.round(opts.count)))
   const isAdversarial = opts.isAdversarial ?? false
+  const baseSeed = opts.baseSeed ?? 0
 
   if (count === 1) {
-    const data = resolveInstance(opts.fields, 0, isAdversarial)
+    const data = resolveInstance(opts.fields, 0, isAdversarial, baseSeed)
     return buildOutput(data, opts)
   }
 
   const data = Array.from({ length: count }, (_, i) =>
-    resolveInstance(opts.fields, i, isAdversarial),
+    resolveInstance(opts.fields, i, isAdversarial, baseSeed),
   )
   return buildOutput(data, opts)
 }

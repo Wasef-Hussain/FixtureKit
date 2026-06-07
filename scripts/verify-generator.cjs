@@ -94,17 +94,17 @@ function isCatCompat(cat, type) {
 
 const MAX_DEPTH = 5
 
-function inferValue(field, index, depth = 0) {
-  if (depth >= MAX_DEPTH) return typeBasedValue(field.type, field.name, index, depth)
+function inferValue(field, index, depth = 0, isAdversarial = false, baseSeed = 0) {
+  if (depth >= MAX_DEPTH) return typeBasedValue(field.type, field.name, index, depth, isAdversarial, baseSeed)
   const cat = getSemanticCategory(field.name)
   if (cat && isCatCompat(cat, field.type)) {
     const pool = VALUE_BANK[cat]
-    return pickFromPool(pool, hashStr(field.name) + index)
+    return pickFromPool(pool, hashStr(field.name) + index + baseSeed)
   }
-  return typeBasedValue(field.type, field.name, index, depth)
+  return typeBasedValue(field.type, field.name, index, depth, isAdversarial, baseSeed)
 }
 
-function typeBasedValue(type, fieldName, index, depth) {
+function typeBasedValue(type, fieldName, index, depth, isAdversarial = false, baseSeed = 0) {
   switch (type.kind) {
     case 'string': return 'value'
     case 'number': return index + 1
@@ -117,16 +117,16 @@ function typeBasedValue(type, fieldName, index, depth) {
     case 'enum': return type.values[0]
     case 'union': {
       const p = type.types.find(t => t.kind !== 'null' && t.kind !== 'undefined')
-      return typeBasedValue(p || type.types[0], fieldName, index, depth)
+      return typeBasedValue(p || type.types[0], fieldName, index, depth, isAdversarial, baseSeed)
     }
     case 'array': {
       if (depth >= MAX_DEPTH) return []
-      return [0,1].map(i => inferValue({ name: fieldName, type: type.itemType, optional: false }, index+i, depth+1))
+      return [0,1].map(i => inferValue({ name: fieldName, type: type.itemType, optional: false }, index+i, depth+1, isAdversarial, baseSeed))
     }
     case 'object': {
       if (depth >= MAX_DEPTH) return {}
       const obj = {}
-      for (const f of type.fields) obj[f.name] = inferValue(f, index, depth+1)
+      for (const f of type.fields) obj[f.name] = inferValue(f, index, depth+1, isAdversarial, baseSeed)
       return obj
     }
   }
@@ -162,23 +162,23 @@ function serializeValue(value, level) {
   return String(value)
 }
 
-function resolveInstance(fields, index) {
+function resolveInstance(fields, index, isAdversarial = false, baseSeed = 0) {
   const obj = {}
-  for (const f of fields) obj[f.name] = inferValue(f, index)
+  for (const f of fields) obj[f.name] = inferValue(f, index, 0, isAdversarial, baseSeed)
   return obj
 }
 
-function generateFixture({ varName, typeName, fields, count }) {
-  count = Math.max(1, Math.min(5, Math.round(count)))
+function generateFixture({ varName, typeName, fields, count, isAdversarial = false, baseSeed = 0 }) {
+  count = Math.max(1, Math.min(100, Math.round(count)))
   if (!fields.length) return ''
   if (count === 1) {
-    const v = resolveInstance(fields, 0)
+    const v = resolveInstance(fields, 0, isAdversarial, baseSeed)
     const ann = typeName ? `: ${typeName}` : ''
     return `export const ${varName}${ann} = ${serializeValue(v, 0)}\n`
   }
   const vn = pluralize(varName)
   const ann = typeName ? `: ${typeName}[]` : ''
-  const items = Array.from({ length: count }, (_, i) => `${ind(1)}${serializeValue(resolveInstance(fields, i), 1)}`)
+  const items = Array.from({ length: count }, (_, i) => `${ind(1)}${serializeValue(resolveInstance(fields, i, isAdversarial, baseSeed), 1)}`)
   return `export const ${vn}${ann} = [\n${items.join(',\n')},\n]\n`
 }
 
