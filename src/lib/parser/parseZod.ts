@@ -68,7 +68,7 @@ function tokenize(input: string): { kind: 'ok'; tokens: Token[] } | { kind: 'err
     }
 
     // Punctuation
-    if ('{}[]().,:'.includes(ch)) {
+    if ('{}[]().,:=;'.includes(ch)) {
       tokens.push({ kind: 'punct', char: ch })
       i++
       continue
@@ -160,8 +160,8 @@ class Parser {
     const t = this.cur()
     if (t.kind !== kind) return false
     if (value !== undefined) {
-      if (t.kind === 'punct') return t.char === value
-      if (t.kind === 'identifier') return t.name === value
+      if (t.kind === 'punct') return (t as { char: string }).char === value
+      if (t.kind === 'identifier') return (t as { name: string }).name === value
       return false
     }
     return true
@@ -176,7 +176,7 @@ class Parser {
     return null
   }
 
-  private expectPunct(char: string): boolean {
+  public expectPunct(char: string): boolean {
     if (this.peek('punct', char)) {
       this.consume()
       return true
@@ -207,20 +207,42 @@ class Parser {
     while (depth > 0) {
       if (this.peek('eof')) this.error('Unexpected end of input while reading method arguments')
       const t = this.consume()
-      if (t.kind === 'punct' && t.char === '(') depth++
-      else if (t.kind === 'punct' && t.char === ')') depth--
+      if (t.kind === 'punct' && (t as any).char === '(') depth++
+      else if (t.kind === 'punct' && (t as any).char === ')') depth--
     }
   }
 
   // Parse a full Zod schema: z.object({ ... })
-  parseSchema(): { fields: Field[] } {
+  parseSchema(): { fields: Field[], rootName: string } {
+    let rootName = ROOT_NAME
+    
+    // Optional variable assignment:
+    // export const MySchema = z.object(...)
+    // const MySchema = z.object(...)
+    if (this.peek('identifier', 'export')) {
+      this.consume()
+    }
+    if (this.peek('identifier', 'const') || this.peek('identifier', 'let') || this.peek('identifier', 'var') || this.peek('identifier', 'type')) {
+      this.consume()
+      const nameToken = this.expect('identifier') as { kind: 'identifier'; name: string } | null
+      if (nameToken) {
+        rootName = nameToken.name
+        this.expectPunct('=') // optionally consume "="
+      }
+    }
+
     this.parseZ()
     this.expectPunct('.') || this.error('Expected z.object(...)')
     const methodName = this.expect('identifier') as { kind: 'identifier'; name: string } | null
     if (!methodName || methodName.name !== 'object') {
       this.error('Expected z.object(...) at the top level')
     }
-    return this.parseObjectContent()
+    const result = this.parseObjectContent()
+    
+    // Optional trailing semicolon
+    while (this.expectPunct(';')) {}
+    
+    return { fields: result.fields, rootName }
   }
 
   // z.object({ ... })
@@ -242,7 +264,6 @@ class Parser {
 
     return { fields }
   }
-
   private parseFields(): Field[] {
     const fields: Field[] = []
     while (!this.peek('punct', '}')) {
