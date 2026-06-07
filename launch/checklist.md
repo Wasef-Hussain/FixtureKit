@@ -4,6 +4,9 @@
 
 - [ ] Push final build to hosting (Vercel / Netlify / Cloudflare Pages)
 - [ ] Verify live URL loads and works end-to-end (TS mode + Zod mode)
+- [ ] V2.1: Test all 4 output tabs (TypeScript, JSON, MSW, Playwright) — see `docs/TESTING.md`
+- [ ] V2.1: Toggle adversarial mode on/off and confirm output changes
+- [ ] Run `npm run verify` locally before deploy
 - [ ] Add the live URL to all post drafts (replace `[link]` placeholders)
 - [ ] Push `README.md` to GitHub
 - [ ] Set GitHub repo description: *"Paste a TypeScript interface or Zod schema → get fixture code"*

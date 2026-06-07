@@ -7,7 +7,12 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "verify:v21": "npx tsx scripts/verify-v21.mjs",
+    "verify:parser": "node scripts/verify-parser.cjs",
+    "verify:zod": "node scripts/verify-zod.cjs",
+    "verify:generator": "node scripts/verify-generator.cjs",
+    "verify": "npm run verify:parser && npm run verify:zod && npm run verify:generator && npm run verify:v21"
   },
   "dependencies": {
     "@vercel/analytics": "^2.0.1",
