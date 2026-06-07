@@ -256,7 +256,8 @@ const styles: Record<string, React.CSSProperties> = {
     color: color.codeText,
     overflow: 'auto',
     whiteSpace: 'pre-wrap',
-    wordBreak: 'break-word',
+    wordBreak: 'break-all',
+    overflowWrap: 'anywhere',
     minHeight: '380px',
   },
   empty: {
