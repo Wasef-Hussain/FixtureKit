@@ -18,6 +18,12 @@ const PLACEHOLDER: Record<Mode, string> = {
 
 const { font, color, radius } = theme
 
+const EXAMPLES = {
+  User: `interface User {\n  id: string\n  firstName: string\n  lastName: string\n  email: string\n  phone: string\n  role: "admin" | "editor" | "viewer"\n  isActive: boolean\n  createdAt: Date\n  address: {\n    street: string\n    city: string\n    country: string\n    zip: string\n  }\n}`,
+  Product: `interface Product {\n  id: string\n  name: string\n  slug: string\n  description: string\n  price: number\n  currency: string\n  inStock: boolean\n  tags: string[]\n  imageUrl: string\n  createdAt: Date\n}`,
+  Order: `interface Order {\n  id: string\n  status: "pending" | "processing" | "shipped" | "delivered" | "cancelled"\n  customerId: string\n  total: number\n  currency: string\n  items: {\n    productId: string\n    quantity: number\n    unitPrice: number\n  }[]\n  createdAt: Date\n  updatedAt: Date\n}`
+}
+
 export default function InputPane({ value, onChange, mode, onModeChange, error, loading, disabled }: Props) {
   return (
     <div style={styles.wrapper}>
@@ -40,6 +46,13 @@ export default function InputPane({ value, onChange, mode, onModeChange, error, 
         >
           Zod
         </button>
+      </div>
+
+      <div style={styles.examplesRow}>
+        <span style={styles.examplesLabel}>Examples:</span>
+        <button style={styles.exampleBtn} onClick={() => onChange(EXAMPLES.User)} disabled={disabled}>User</button>
+        <button style={styles.exampleBtn} onClick={() => onChange(EXAMPLES.Product)} disabled={disabled}>Product</button>
+        <button style={styles.exampleBtn} onClick={() => onChange(EXAMPLES.Order)} disabled={disabled}>Order</button>
       </div>
 
       <textarea
@@ -163,5 +176,30 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: '11px',
     fontWeight: 700,
     flexShrink: 0,
+  },
+  examplesRow: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '6px',
+    marginBottom: '2px',
+  },
+  examplesLabel: {
+    fontSize: '12px',
+    fontFamily: font.sans,
+    color: color.textSubtle,
+    marginRight: '4px',
+    fontWeight: 500,
+  },
+  exampleBtn: {
+    padding: '3px 10px',
+    border: `1px solid ${color.border}`,
+    borderRadius: '100px',
+    background: color.surfaceMuted,
+    color: color.textMuted,
+    fontSize: '11px',
+    fontWeight: 600,
+    fontFamily: font.sans,
+    cursor: 'pointer',
+    outline: 'none',
   },
 }

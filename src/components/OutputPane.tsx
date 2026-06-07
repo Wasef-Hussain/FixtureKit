@@ -20,6 +20,23 @@ const TAB_META: Record<OutputTab, { label: string; hint: string; ext: string; mi
 
 const { font, color, radius } = theme
 
+function tokenizeCode(code: string): string {
+  const safe = code.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  
+  const tokenRegex = /(\/\/.*)|(["'`])(?:(?!\2|\\)[\s\S]|\\.)*\2|(\b[a-zA-Z_]\w*\s*(?=:))|(:\s*)([A-Z]\w*(?:\[\])?)|(\b(?:true|false|null|undefined)\b)|(\b(?:export|const|let|var|type|interface|import|from|async|await)\b)|(\b-?\d+(?:\.\d+)?\b)/g
+
+  return safe.replace(tokenRegex, (match, comment, quote, key, colonSpace, typeAnn, bool, keyword, number) => {
+    if (comment) return `<span style="color: #94a3b8">${match}</span>`
+    if (quote) return `<span style="color: #86efac">${match}</span>`
+    if (key) return `<span style="color: #7dd3fc">${match}</span>`
+    if (typeAnn) return `${colonSpace}<span style="color: #c4b5fd">${typeAnn}</span>`
+    if (bool) return `<span style="color: #f87171">${match}</span>`
+    if (keyword) return `<span style="color: #818cf8">${match}</span>`
+    if (number) return `<span style="color: #fcd34d">${match}</span>`
+    return match
+  })
+}
+
 export default function OutputPane({ output, activeTab, onTabChange }: Props) {
   const empty = output === null
   const activeCode = empty ? '' : output[activeTab]
@@ -74,7 +91,7 @@ export default function OutputPane({ output, activeTab, onTabChange }: Props) {
             </p>
           </div>
         ) : (
-          <code>{activeCode}</code>
+          <code dangerouslySetInnerHTML={{ __html: tokenizeCode(activeCode) }} />
         )}
       </pre>
     </div>
