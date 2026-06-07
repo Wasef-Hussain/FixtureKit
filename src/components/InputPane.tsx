@@ -1,4 +1,5 @@
 import type { Mode } from '../hooks/useFixtureGen'
+import { theme } from '../styles/theme'
 
 interface Props {
   value: string
@@ -15,28 +16,32 @@ const PLACEHOLDER: Record<Mode, string> = {
   zod: 'Paste Zod schema…\n\nz.object({\n  name: z.string(),\n  age: z.number(),\n  email: z.string().optional(),\n})',
 }
 
+const { font, color, radius } = theme
+
 export default function InputPane({ value, onChange, mode, onModeChange, error, loading, disabled }: Props) {
   return (
     <div style={styles.wrapper}>
-      {/* Mode toggle */}
-      <div style={styles.toggleRow}>
+      <div style={styles.toggleRow} role="tablist" aria-label="Input type">
         <button
+          role="tab"
+          aria-selected={mode === 'ts'}
           style={{ ...styles.toggleBtn, ...(mode === 'ts' ? styles.toggleBtnActive : {}) }}
           onClick={() => onModeChange('ts')}
           disabled={disabled}
         >
-          TypeScript Interface
+          TypeScript
         </button>
         <button
+          role="tab"
+          aria-selected={mode === 'zod'}
           style={{ ...styles.toggleBtn, ...(mode === 'zod' ? styles.toggleBtnActive : {}) }}
           onClick={() => onModeChange('zod')}
           disabled={disabled}
         >
-          Zod Schema
+          Zod
         </button>
       </div>
 
-      {/* Textarea */}
       <textarea
         style={styles.textarea}
         value={value}
@@ -46,15 +51,16 @@ export default function InputPane({ value, onChange, mode, onModeChange, error, 
         disabled={disabled}
       />
 
-      {/* Loading indicator */}
       {loading && (
-        <div style={styles.loadingBanner}>Loading parser…</div>
+        <div style={styles.loadingBanner}>
+          <span style={styles.spinner} />
+          Loading TypeScript parser…
+        </div>
       )}
 
-      {/* Error banner */}
       {error && !loading && (
         <div style={styles.errorBanner}>
-          <span style={styles.errorIcon}>⚠</span>
+          <span style={styles.errorIcon}>!</span>
           {error}
         </div>
       )}
@@ -68,60 +74,94 @@ const styles: Record<string, React.CSSProperties> = {
     flexDirection: 'column',
     gap: '12px',
     height: '100%',
+    minHeight: 0,
   },
   toggleRow: {
     display: 'flex',
-    gap: '0',
-    borderRadius: '6px',
-    overflow: 'hidden',
-    border: '1px solid #d1d5db',
+    gap: '4px',
+    padding: '3px',
+    borderRadius: radius.md,
+    background: color.surfaceMuted,
+    border: `1px solid ${color.border}`,
     width: 'fit-content',
   },
   toggleBtn: {
-    padding: '6px 16px',
+    padding: '7px 16px',
     border: 'none',
-    background: '#f9fafb',
-    color: '#374151',
+    borderRadius: radius.sm,
+    background: 'transparent',
+    color: color.textMuted,
     fontSize: '13px',
-    fontFamily: 'inherit',
+    fontWeight: 600,
+    fontFamily: font.sans,
     cursor: 'pointer',
     outline: 'none',
   },
   toggleBtnActive: {
-    background: '#1f2937',
-    color: '#ffffff',
+    background: color.surface,
+    color: color.text,
+    boxShadow: '0 1px 3px rgba(15, 23, 42, 0.08)',
   },
   textarea: {
     flex: 1,
     padding: '16px',
-    fontSize: '14px',
-    fontFamily: '"Fira Code", "Cascadia Code", "JetBrains Mono", monospace',
-    lineHeight: 1.7,
-    border: '1px solid #d1d5db',
-    borderRadius: '8px',
+    fontSize: '13px',
+    fontFamily: font.mono,
+    lineHeight: 1.65,
+    border: `1px solid ${color.border}`,
+    borderRadius: radius.md,
     resize: 'none',
     outline: 'none',
-    background: '#fafafa',
-    color: '#111827',
+    background: color.surfaceMuted,
+    color: color.text,
+    minHeight: '380px',
   },
   loadingBanner: {
-    padding: '8px 14px',
-    borderRadius: '6px',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '10px',
+    padding: '10px 14px',
+    borderRadius: radius.sm,
     fontSize: '13px',
-    background: '#eff6ff',
-    color: '#1e40af',
-    border: '1px solid #bfdbfe',
+    fontWeight: 500,
+    fontFamily: font.sans,
+    background: color.accentSoft,
+    color: color.accent,
+    border: `1px solid rgba(79, 70, 229, 0.2)`,
+  },
+  spinner: {
+    width: '14px',
+    height: '14px',
+    borderRadius: '50%',
+    border: `2px solid ${color.accent}`,
+    borderTopColor: 'transparent',
+    animation: 'spin 0.8s linear infinite',
+    flexShrink: 0,
   },
   errorBanner: {
+    display: 'flex',
+    alignItems: 'flex-start',
+    gap: '10px',
     padding: '10px 14px',
-    borderRadius: '6px',
+    borderRadius: radius.sm,
     fontSize: '13px',
-    background: '#fef2f2',
-    color: '#991b1b',
-    border: '1px solid #fecaca',
+    fontFamily: font.sans,
+    background: color.dangerSoft,
+    color: color.danger,
+    border: `1px solid #fecaca`,
     lineHeight: 1.5,
   },
   errorIcon: {
-    marginRight: '8px',
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '18px',
+    height: '18px',
+    borderRadius: '50%',
+    background: color.danger,
+    color: '#fff',
+    fontSize: '11px',
+    fontWeight: 700,
+    flexShrink: 0,
   },
 }

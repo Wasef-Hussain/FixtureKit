@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import type { FixtureOutput } from '../lib/generator/generateFixture'
 import type { OutputTab } from '../hooks/useFixtureGen'
+import { theme } from '../styles/theme'
 
 interface Props {
   output: FixtureOutput | null
@@ -10,42 +11,68 @@ interface Props {
 
 const ALL_TABS: OutputTab[] = ['ts', 'json', 'msw', 'playwright']
 
-const TAB_META: Record<OutputTab, { label: string; ext: string; mime: string }> = {
-  ts:          { label: '.ts',         ext: '.ts',          mime: 'text/typescript' },
-  json:        { label: '.json',       ext: '.json',        mime: 'application/json' },
-  msw:         { label: '.msw',        ext: '.handler.ts',  mime: 'text/typescript' },
-  playwright:  { label: '.playwright', ext: '.spec.ts',     mime: 'text/typescript' },
+const TAB_META: Record<OutputTab, { label: string; hint: string; ext: string; mime: string }> = {
+  ts:         { label: 'TypeScript', ext: '.ts',          mime: 'text/typescript', hint: 'Copy-ready const' },
+  json:       { label: 'JSON',       ext: '.json',        mime: 'application/json', hint: 'API response body' },
+  msw:        { label: 'MSW',        ext: '.handler.ts',  mime: 'text/typescript', hint: 'Mock Service Worker' },
+  playwright: { label: 'Playwright', ext: '.spec.ts',     mime: 'text/typescript', hint: 'Route interception' },
 }
+
+const { font, color, radius } = theme
 
 export default function OutputPane({ output, activeTab, onTabChange }: Props) {
   const empty = output === null
   const activeCode = empty ? '' : output[activeTab]
+  const meta = TAB_META[activeTab]
 
   return (
     <div style={styles.wrapper}>
-      {/* --- Tab row --- */}
-      <div style={styles.tabRow}>
-        {ALL_TABS.map((tab) => (
-          <button
-            key={tab}
-            onClick={() => onTabChange(tab)}
-            style={{
-              ...styles.tab,
-              ...(activeTab === tab ? styles.tabActive : {}),
-            }}
-          >
-            {TAB_META[tab].label}
-          </button>
-        ))}
-        <span style={styles.spacer} />
-        <CopyBtn code={activeCode} disabled={empty} />
-        <DownloadBtn code={activeCode} disabled={empty} meta={TAB_META[activeTab]} />
+      {/* Toolbar: format picker + actions — no stray divider line */}
+      <div style={styles.toolbar}>
+        <div style={styles.formatGroup} role="tablist" aria-label="Output format">
+          {ALL_TABS.map((tab) => {
+            const active = activeTab === tab
+            const t = TAB_META[tab]
+            return (
+              <button
+                key={tab}
+                role="tab"
+                aria-selected={active}
+                onClick={() => onTabChange(tab)}
+                style={{
+                  ...styles.formatBtn,
+                  ...(active ? styles.formatBtnActive : {}),
+                }}
+              >
+                <span style={{
+                  ...styles.formatLabel,
+                  ...(active ? styles.formatLabelActive : {}),
+                }}>{t.label}</span>
+                <span style={{
+                  ...styles.formatHint,
+                  ...(active ? styles.formatHintActive : {}),
+                }}>
+                  {t.hint}
+                </span>
+              </button>
+            )
+          })}
+        </div>
+        <div style={styles.actions}>
+          <CopyBtn code={activeCode} disabled={empty} />
+          <DownloadBtn code={activeCode} disabled={empty} meta={meta} />
+        </div>
       </div>
 
-      {/* --- Code display --- */}
       <pre style={styles.codeBlock}>
         {empty ? (
-          <span style={styles.placeholder}>Generated fixture will appear here</span>
+          <div style={styles.empty}>
+            <div style={styles.emptyIcon}>{'{ }'}</div>
+            <p style={styles.emptyTitle}>Your fixture will appear here</p>
+            <p style={styles.emptyHint}>
+              Paste a schema on the left — pick a format above to export as TypeScript, JSON, MSW, or Playwright.
+            </p>
+          </div>
         ) : (
           <code>{activeCode}</code>
         )}
@@ -53,10 +80,6 @@ export default function OutputPane({ output, activeTab, onTabChange }: Props) {
     </div>
   )
 }
-
-// ---------------------------------------------------------------------------
-// Sub-components
-// ---------------------------------------------------------------------------
 
 function CopyBtn({ code, disabled }: { code: string; disabled: boolean }) {
   const [copied, setCopied] = useState(false)
@@ -69,7 +92,6 @@ function CopyBtn({ code, disabled }: { code: string; disabled: boolean }) {
         setTimeout(() => setCopied(false), 1500)
       },
       () => {
-        // Fallback for older browsers / non-HTTPS
         const ta = document.createElement('textarea')
         ta.value = code
         ta.style.position = 'fixed'
@@ -90,7 +112,7 @@ function CopyBtn({ code, disabled }: { code: string; disabled: boolean }) {
       onClick={handleCopy}
       disabled={disabled}
     >
-      {copied ? 'Copied!' : 'Copy'}
+      {copied ? '✓ Copied' : 'Copy'}
     </button>
   )
 }
@@ -104,101 +126,173 @@ function DownloadBtn({
   disabled: boolean
   meta: { ext: string; mime: string }
 }) {
-  function handleDownload() {
-    if (disabled) return
-    const blob = new Blob([code], { type: meta.mime })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `fixture${meta.ext}`
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    URL.revokeObjectURL(url)
-  }
-
   return (
-    <button style={styles.actionBtn} onClick={handleDownload} disabled={disabled}>
-      Download{meta.ext}
+    <button
+      style={styles.actionBtnPrimary}
+      onClick={() => {
+        if (disabled) return
+        const blob = new Blob([code], { type: meta.mime })
+        const url = URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url
+        a.download = `fixture${meta.ext}`
+        document.body.appendChild(a)
+        a.click()
+        document.body.removeChild(a)
+        URL.revokeObjectURL(url)
+      }}
+      disabled={disabled}
+    >
+      Download
     </button>
   )
 }
-
-// ---------------------------------------------------------------------------
-// Styles
-// ---------------------------------------------------------------------------
 
 const styles: Record<string, React.CSSProperties> = {
   wrapper: {
     display: 'flex',
     flexDirection: 'column',
-    gap: '0',
     height: '100%',
+    minHeight: 0,
   },
-  tabRow: {
+  toolbar: {
     display: 'flex',
     alignItems: 'center',
-    gap: '0',
-    borderBottom: '1px solid #d1d5db',
-    marginBottom: '12px',
+    justifyContent: 'space-between',
+    gap: '12px',
+    flexWrap: 'wrap',
+    padding: '12px 14px',
+    background: color.surfaceMuted,
+    borderBottom: `1px solid ${color.border}`,
   },
-  tab: {
-    padding: '8px 16px',
-    fontSize: '12px',
-    fontFamily: '"Fira Code", "Cascadia Code", "JetBrains Mono", monospace',
-    fontWeight: 600,
-    textTransform: 'uppercase',
-    letterSpacing: '0.5px',
+  formatGroup: {
+    display: 'flex',
+    gap: '4px',
+    flexWrap: 'wrap',
+    padding: '3px',
+    background: color.surface,
+    borderRadius: radius.md,
+    border: `1px solid ${color.border}`,
+  },
+  formatBtn: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'flex-start',
+    gap: '1px',
+    padding: '6px 12px',
     border: 'none',
-    borderBottom: '2px solid transparent',
+    borderRadius: radius.sm,
     background: 'transparent',
-    color: '#6b7280',
     cursor: 'pointer',
     outline: 'none',
-    transition: 'color 0.15s, border-color 0.15s',
+    minWidth: '88px',
   },
-  tabActive: {
-    color: '#2563eb',
-    borderBottomColor: '#2563eb',
+  formatBtnActive: {
+    background: color.accent,
+    boxShadow: '0 1px 4px rgba(79, 70, 229, 0.35)',
   },
-  spacer: {
-    flex: 1,
+  formatLabel: {
+    fontSize: '12px',
+    fontWeight: 600,
+    fontFamily: font.sans,
+    color: color.textMuted,
+    lineHeight: 1.2,
+  },
+  formatLabelActive: {
+    color: '#ffffff',
+  },
+  formatHint: {
+    fontSize: '10px',
+    fontWeight: 500,
+    fontFamily: font.sans,
+    color: color.textSubtle,
+    lineHeight: 1.2,
+  },
+  formatHintActive: {
+    color: 'rgba(255,255,255,0.75)',
+  },
+  actions: {
+    display: 'flex',
+    gap: '8px',
+    flexShrink: 0,
   },
   actionBtn: {
-    padding: '5px 12px',
-    fontSize: '12px',
-    fontFamily: 'inherit',
+    padding: '7px 14px',
+    fontSize: '13px',
+    fontFamily: font.sans,
     fontWeight: 500,
-    border: '1px solid #d1d5db',
-    borderRadius: '6px',
-    background: '#ffffff',
-    color: '#374151',
+    border: `1px solid ${color.border}`,
+    borderRadius: radius.sm,
+    background: color.surface,
+    color: color.text,
     cursor: 'pointer',
     outline: 'none',
-    marginLeft: '8px',
+  },
+  actionBtnPrimary: {
+    padding: '7px 14px',
+    fontSize: '13px',
+    fontFamily: font.sans,
+    fontWeight: 600,
+    border: 'none',
+    borderRadius: radius.sm,
+    background: color.accent,
+    color: '#ffffff',
+    cursor: 'pointer',
+    outline: 'none',
   },
   btnCopied: {
-    background: '#10b981',
-    color: '#ffffff',
-    borderColor: '#10b981',
+    background: color.successSoft,
+    color: color.success,
+    borderColor: color.success,
   },
   codeBlock: {
     flex: 1,
     margin: 0,
-    padding: '16px',
-    fontSize: '14px',
-    fontFamily: '"Fira Code", "Cascadia Code", "JetBrains Mono", monospace',
-    lineHeight: 1.7,
-    border: '1px solid #d1d5db',
-    borderRadius: '8px',
-    background: '#1e1e2e',
-    color: '#cdd6f4',
+    padding: '18px 20px',
+    fontSize: '13px',
+    fontFamily: font.mono,
+    lineHeight: 1.65,
+    background: color.codeBg,
+    color: color.codeText,
     overflow: 'auto',
     whiteSpace: 'pre-wrap',
     wordBreak: 'break-word',
+    minHeight: '380px',
   },
-  placeholder: {
-    color: '#6c7086',
-    fontStyle: 'italic',
+  empty: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    textAlign: 'center',
+    padding: '48px 24px',
+    height: '100%',
+    minHeight: '320px',
+  },
+  emptyIcon: {
+    fontSize: '32px',
+    fontFamily: font.mono,
+    fontWeight: 500,
+    color: color.codeMuted,
+    marginBottom: '16px',
+    padding: '12px 20px',
+    borderRadius: radius.md,
+    border: `1px dashed ${color.codeMuted}`,
+    opacity: 0.6,
+  },
+  emptyTitle: {
+    fontSize: '15px',
+    fontWeight: 600,
+    fontFamily: font.sans,
+    color: color.codeText,
+    margin: '0 0 8px',
+  },
+  emptyHint: {
+    fontSize: '13px',
+    fontFamily: font.sans,
+    color: color.codeMuted,
+    margin: 0,
+    maxWidth: '320px',
+    lineHeight: 1.5,
   },
 }

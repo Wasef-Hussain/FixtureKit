@@ -2,6 +2,9 @@ import { useFixtureGen } from '../hooks/useFixtureGen'
 import InputPane from './InputPane'
 import OutputPane from './OutputPane'
 import OptionsBar from './OptionsBar'
+import { theme } from '../styles/theme'
+
+const { font, color, radius, shadow } = theme
 
 export default function App() {
   const gen = useFixtureGen()
@@ -9,10 +12,21 @@ export default function App() {
   return (
     <div style={S.page}>
       <header style={S.header}>
-        <h1 style={S.title}>FixtureKit</h1>
-        <span style={S.subtitle}>
-          Your mocks in seconds, not minutes. Paste a TypeScript interface or Zod schema &mdash; get realistic, copy-ready fixture code. Nothing leaves the browser.
-        </span>
+        <div style={S.headerTop}>
+          <div style={S.brand}>
+            <span style={S.logo}>⚡</span>
+            <h1 style={S.title}>FixtureKit</h1>
+          </div>
+          <div style={S.badges}>
+            <span style={S.badge}>Runs in browser</span>
+            <span style={S.badge}>No signup</span>
+          </div>
+        </div>
+        <p style={S.subtitle}>
+          Paste a TypeScript interface or Zod schema — get realistic fixtures in{' '}
+          <strong style={S.subtitleStrong}>TypeScript, JSON, MSW, or Playwright</strong>.
+          Nothing leaves your machine.
+        </p>
       </header>
 
       <OptionsBar
@@ -26,25 +40,37 @@ export default function App() {
       />
 
       <div style={S.columns} data-columns="">
-        <div style={S.pane}>
-          <InputPane
-            value={gen.inputText}
-            onChange={gen.setInputText}
-            mode={gen.mode}
-            onModeChange={gen.setMode}
-            error={gen.error}
-            loading={gen.loading}
-            disabled={false}
-          />
-        </div>
+        <section style={S.pane}>
+          <div style={S.paneLabel}>
+            <span style={S.paneDot} />
+            Input
+          </div>
+          <div style={S.card}>
+            <InputPane
+              value={gen.inputText}
+              onChange={gen.setInputText}
+              mode={gen.mode}
+              onModeChange={gen.setMode}
+              error={gen.error}
+              loading={gen.loading}
+              disabled={false}
+            />
+          </div>
+        </section>
 
-        <div style={S.pane}>
-          <OutputPane
-            output={gen.output}
-            activeTab={gen.activeTab}
-            onTabChange={gen.setActiveTab}
-          />
-        </div>
+        <section style={S.pane}>
+          <div style={S.paneLabel}>
+            <span style={{ ...S.paneDot, background: color.success }} />
+            Output
+          </div>
+          <div style={{ ...S.card, ...S.outputCard }}>
+            <OutputPane
+              output={gen.output}
+              activeTab={gen.activeTab}
+              onTabChange={gen.setActiveTab}
+            />
+          </div>
+        </section>
       </div>
 
       <footer style={S.footer}>
@@ -56,38 +82,78 @@ export default function App() {
   )
 }
 
-// Inline styles for the layout. Responsive stacking on mobile is handled
-// by a media query in index.html (targets [data-columns]).
 const S: Record<string, React.CSSProperties> = {
   page: {
-    maxWidth: '1200px',
+    maxWidth: '1180px',
     margin: '0 auto',
-    padding: '24px 24px 48px',
+    padding: '32px 24px 48px',
     minHeight: '100vh',
     display: 'flex',
     flexDirection: 'column',
     gap: '0',
-    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-    color: '#111827',
-    background: '#ffffff',
+    fontFamily: font.sans,
+    color: color.text,
   },
   header: {
-    marginBottom: '4px',
+    marginBottom: '20px',
+  },
+  headerTop: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    flexWrap: 'wrap',
+    gap: '12px',
+    marginBottom: '8px',
+  },
+  brand: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '10px',
+  },
+  logo: {
+    fontSize: '22px',
+    lineHeight: 1,
   },
   title: {
-    fontSize: '24px',
+    fontSize: '26px',
     fontWeight: 700,
-    margin: '0 0 4px',
-    color: '#111827',
-    letterSpacing: '-0.5px',
+    margin: 0,
+    color: color.text,
+    letterSpacing: '-0.6px',
+    background: `linear-gradient(135deg, ${color.text} 0%, ${color.accent} 100%)`,
+    WebkitBackgroundClip: 'text',
+    WebkitTextFillColor: 'transparent',
+    backgroundClip: 'text',
+  },
+  badges: {
+    display: 'flex',
+    gap: '8px',
+    flexWrap: 'wrap',
+  },
+  badge: {
+    fontSize: '11px',
+    fontWeight: 600,
+    letterSpacing: '0.3px',
+    padding: '4px 10px',
+    borderRadius: radius.pill,
+    background: color.accentSoft,
+    color: color.accent,
+    border: `1px solid rgba(79, 70, 229, 0.15)`,
   },
   subtitle: {
-    fontSize: '14px',
-    color: '#6b7280',
+    fontSize: '15px',
+    lineHeight: 1.6,
+    color: color.textMuted,
+    maxWidth: '640px',
+    margin: 0,
+  },
+  subtitleStrong: {
+    color: color.text,
+    fontWeight: 600,
   },
   columns: {
     display: 'flex',
-    gap: '24px',
+    gap: '20px',
     flex: 1,
     minHeight: 0,
   },
@@ -96,23 +162,56 @@ const S: Record<string, React.CSSProperties> = {
     display: 'flex',
     flexDirection: 'column',
     minWidth: 0,
-    minHeight: '500px',
+    minHeight: '520px',
+    gap: '8px',
+  },
+  paneLabel: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+    fontSize: '12px',
+    fontWeight: 600,
+    letterSpacing: '0.6px',
+    textTransform: 'uppercase',
+    color: color.textSubtle,
+    paddingLeft: '4px',
+  },
+  paneDot: {
+    width: '6px',
+    height: '6px',
+    borderRadius: '50%',
+    background: color.accent,
+  },
+  card: {
+    flex: 1,
+    display: 'flex',
+    flexDirection: 'column',
+    background: color.surface,
+    border: `1px solid ${color.border}`,
+    borderRadius: radius.lg,
+    boxShadow: shadow.card,
+    padding: '16px',
+    minHeight: 0,
+  },
+  outputCard: {
+    padding: 0,
+    overflow: 'hidden',
   },
   footer: {
-    marginTop: '24px',
+    marginTop: '28px',
     paddingTop: '16px',
-    borderTop: '1px solid #e5e7eb',
+    borderTop: `1px solid ${color.border}`,
     display: 'flex',
     gap: '8px',
     alignItems: 'center',
   },
   footerLink: {
     fontSize: '13px',
-    color: '#6b7280',
+    color: color.textMuted,
     textDecoration: 'none',
   },
   footerSep: {
     fontSize: '13px',
-    color: '#d1d5db',
+    color: color.borderStrong,
   },
 }
