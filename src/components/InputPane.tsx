@@ -114,7 +114,7 @@ const styles: Record<string, React.CSSProperties> = {
     outline: 'none',
     background: color.surfaceMuted,
     color: color.text,
-    minHeight: '380px',
+    minHeight: 0,
   },
   loadingBanner: {
     display: 'flex',

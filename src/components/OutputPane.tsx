@@ -258,7 +258,7 @@ const styles: Record<string, React.CSSProperties> = {
     whiteSpace: 'pre-wrap',
     wordBreak: 'break-all',
     overflowWrap: 'anywhere',
-    minHeight: '380px',
+    minHeight: 0,
   },
   empty: {
     display: 'flex',
@@ -268,7 +268,7 @@ const styles: Record<string, React.CSSProperties> = {
     textAlign: 'center',
     padding: '48px 24px',
     height: '100%',
-    minHeight: '320px',
+    minHeight: 0,
   },
   emptyIcon: {
     fontSize: '32px',

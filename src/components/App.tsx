@@ -87,7 +87,8 @@ const S: Record<string, React.CSSProperties> = {
     maxWidth: '1180px',
     margin: '0 auto',
     padding: '32px 24px 48px',
-    minHeight: '100vh',
+    height: '100vh',
+    boxSizing: 'border-box',
     display: 'flex',
     flexDirection: 'column',
     gap: '0',
@@ -162,7 +163,7 @@ const S: Record<string, React.CSSProperties> = {
     display: 'flex',
     flexDirection: 'column',
     minWidth: 0,
-    minHeight: '520px',
+    minHeight: 0,
     gap: '8px',
   },
   paneLabel: {
