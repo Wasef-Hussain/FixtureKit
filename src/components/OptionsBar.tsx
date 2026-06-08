@@ -37,10 +37,10 @@ export default function OptionsBar({
           value={count}
           onChange={(e) => {
             const n = Number(e.target.value)
-            if (n >= 1 && n <= 100) onCountChange(n)
+            if (n >= 1 && n <= 1000) onCountChange(n)
           }}
           min={1}
-          max={100}
+          max={1000}
           disabled={disabled}
         />
       </div>

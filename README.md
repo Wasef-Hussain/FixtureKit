@@ -8,12 +8,12 @@ FixtureKit is a browser-based tool that generates realistic mock data from your 
 
 ## What it does
 
-1. Paste a TypeScript `interface` or `type`, or a Zod `z.object(...)` schema
-2. Choose how many fixtures you want (1–100)
+1. Paste a TypeScript `interface` or `type`, or a Zod `z.object(...)` schema (including `const Schema = ...` declarations)
+2. Choose how many fixtures you want (1–1000)
 3. Pick an output format: **TypeScript**, **JSON**, **MSW**, or **Playwright**
 4. Copy or download — drop straight into tests, mocks, or API stubs
 
-Field names drive semantic inference: `email` gets a realistic email, `createdAt` gets an ISO date, `price` gets a plausible number. Output is deterministic — the same schema always produces the same fixtures.
+Field names drive semantic inference: `email` gets a realistic email, `createdAt` gets an ISO date, `price` gets a plausible number. Output is deterministic by default — the same schema always produces the same fixtures (unless you enable Randomized mode).
 
 ### V2.1 — Multi-format output
 
@@ -34,6 +34,14 @@ Toggle **Adversarial mode** to inject stress-test values:
 - Random `null` / `undefined` on optional fields
 
 Useful for verifying sanitization, validation, and null-handling in your app.
+
+### Randomized data
+
+Toggle **Randomized data** to break determinism:
+
+- Generates completely random data for every fixture on every run.
+- Use the **🔀 Shuffle** button to reroll new data on demand.
+- Perfect for generating large datasets (up to 1000 records) to populate complex UI mocks and tables.
 
 ### Shareable URLs
 Click **Copy link** in the output toolbar to copy a URL that encodes your schema, mode, fixture count, and output format. Anyone who opens the link gets the schema pre-loaded instantly — no backend, no storage, encoded in the URL hash.
@@ -90,7 +98,7 @@ export const mockUserHandler = http.get('/api/endpoint', () => {
 
 **TypeScript:** `interface`, `type` aliases, primitives, arrays, nested objects, optional properties, unions, string/number/boolean literals
 
-**Zod:** `z.object`, `z.string`, `z.number`, `z.boolean`, `z.date`, `z.array`, `z.enum`, `z.union`, `z.literal`, `.optional()`, `.nullable()`
+**Zod:** `const Schema = z.object(...)`, `export const Schema = z.object(...)`, `z.string`, `z.number`, `z.boolean`, `z.date`, `z.array`, `z.enum`, `z.union`, `z.literal`, `.optional()`, `.nullable()`
 
 Supports `Partial<T>`, `Pick<T>`, `Omit<T>`, `Required<T>`. Generics, mapped types, `.refine`, `.transform`, and other advanced features are out of scope and return a clear error.
 

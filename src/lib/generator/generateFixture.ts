@@ -142,7 +142,7 @@ function resolveInstance(
 type Data = Record<string, unknown> | Record<string, unknown>[]
 
 function buildOutput(data: Data, opts: GenerateOptions): FixtureOutput {
-  const count = Math.max(1, Math.min(100, Math.round(opts.count)))
+  const count = Math.max(1, Math.min(1000, Math.round(opts.count)))
 
   // --- TS ---
   const annotation = opts.typeName ? `: ${opts.typeName}` : ''
@@ -196,7 +196,7 @@ function buildOutput(data: Data, opts: GenerateOptions): FixtureOutput {
  *          each containing the formatted fixture string for that format.
  */
 export function generateFixture(opts: GenerateOptions): FixtureOutput {
-  const count = Math.max(1, Math.min(100, Math.round(opts.count)))
+  const count = Math.max(1, Math.min(1000, Math.round(opts.count)))
   const isAdversarial = opts.isAdversarial ?? false
   const baseSeed = opts.baseSeed ?? 0
 
