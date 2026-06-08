@@ -269,6 +269,9 @@ function detectUnsupported(sourceFile: ts.SourceFile): string | null {
         if (!['Partial', 'Required', 'Pick', 'Omit', 'Record', 'Readonly'].includes(refName)) {
           return `Unsupported type: type aliases must be object shapes ("{ ... }"). Found: TypeReference (${refName}).`
         }
+      } else if (ts.isUnionTypeNode(t)) {
+        const allLiteral = t.types.every(child => ts.isLiteralTypeNode(child) && ts.isStringLiteral(child.literal))
+        if (!allLiteral) return `Unsupported type: type aliases must be object shapes ("{ ... }"). Found: UnionType.`
       } else if (!ts.isTypeLiteralNode(t)) {
         return `Unsupported type: type aliases must be object shapes ("{ ... }"). Found: ${ts.SyntaxKind[t.kind]}.`
       }
@@ -359,6 +362,14 @@ function extractFieldsFromDecl(stmt: ts.Statement, sourceFile: ts.SourceFile, re
       if (resolved.kind === 'object') return { rootName, fields: resolved.fields }
     }
 
+    if (ts.isUnionTypeNode(typeNode)) {
+      const resolved = resolveType(typeNode, sourceFile, resolvingTypes)
+      if (resolved.kind === 'enum') {
+        const fieldName = rootName.charAt(0).toLowerCase() + rootName.slice(1)
+        return { rootName, fields: [{ name: fieldName, type: resolved, optional: false }] }
+      }
+    }
+
     if (!ts.isTypeLiteralNode(typeNode)) return null
 
     const lit = typeNode as ts.TypeLiteralNode
@@ -374,7 +385,7 @@ function extractFieldsFromDecl(stmt: ts.Statement, sourceFile: ts.SourceFile, re
 }
 
 function extractFields(sourceFile: ts.SourceFile): { rootName: string; fields: Field[] } | null {
-  const candidates: { decl: ts.Statement; extracted: { rootName: string; fields: Field[] } }[] = []
+  const candidates: { decl: ts.Statement & { modifiers?: readonly ts.ModifierLike[] }; extracted: { rootName: string; fields: Field[] } }[] = []
 
   for (const stmt of sourceFile.statements) {
     const res = extractFieldsFromDecl(stmt, sourceFile)

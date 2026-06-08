@@ -44,7 +44,7 @@ function isCategoryCompatible(category: SemanticCategory, fieldType: FieldType):
   const kind = effectiveTypeKind(fieldType)
   if (kind === 'boolean') return BOOLEAN_CATS.has(category)
   if (kind === 'number') return NUMERIC_CATS.has(category)
-  if (kind === 'array' || kind === 'object') return false
+  if (kind === 'array' || kind === 'object' || kind === 'literal' || kind === 'enum') return false
   // string, date, unknown, literal, union(string|null), etc. — allow any non-numeric/non-boolean category
   return !NUMERIC_CATS.has(category) && !BOOLEAN_CATS.has(category)
 }
