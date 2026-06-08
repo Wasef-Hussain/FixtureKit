@@ -37,8 +37,14 @@
       @keyframes spin { to { transform: rotate(360deg); } }
       @media (max-width: 768px) {
         [data-columns] { flex-direction: column !important; }
+        textarea { min-height: 220px !important; }
       }
       @media (max-width: 640px) {
+        #root > div { padding-top: 16px !important; padding-bottom: 32px !important; }
+        [role="tablist"][aria-label="Output format"] button {
+          min-width: unset !important;
+          padding: 6px 8px !important;
+        }
         .mobile-wrap { flex-wrap: wrap !important; }
         .mobile-stack-input { flex-direction: column !important; align-items: flex-start !important; width: 100% !important; }
         .mobile-input-w { width: 100% !important; }

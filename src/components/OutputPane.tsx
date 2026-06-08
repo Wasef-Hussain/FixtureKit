@@ -240,7 +240,6 @@ const styles: Record<string, React.CSSProperties> = {
     background: 'transparent',
     cursor: 'pointer',
     outline: 'none',
-    minWidth: '88px',
   },
   formatBtnActive: {
     background: color.accent,
@@ -311,7 +310,6 @@ const styles: Record<string, React.CSSProperties> = {
     color: color.codeText,
     overflow: 'auto',
     whiteSpace: 'pre-wrap',
-    wordBreak: 'break-all',
     overflowWrap: 'anywhere',
     minHeight: 0,
   },
