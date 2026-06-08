@@ -10,12 +10,8 @@ export type AnalyticsEvent =
 
 export const Analytics = {
   track: (event: AnalyticsEvent, payload?: Record<string, any>) => {
-    // Determine the environment. We don't want to spam tests.
-    const isTest = typeof process !== 'undefined' && process.env.NODE_ENV === 'test'
-    if (isTest) return
-
     // Currently stubbed. Just logs to the console for telemetry simulation.
-    console.log(\`[Analytics] \${event}\`, payload ? payload : '')
+    console.log(`[Analytics] ${event}`, payload ? payload : '')
     
     // In the future:
     // if (window.va) window.va.track(event, payload)
