@@ -25,6 +25,7 @@
         color: #0f172a;
         -webkit-font-smoothing: antialiased;
         min-height: 100vh;
+        overflow-x: hidden;
       }
       textarea:focus, input:focus {
         border-color: #6366f1 !important;
@@ -36,6 +37,17 @@
       @keyframes spin { to { transform: rotate(360deg); } }
       @media (max-width: 768px) {
         [data-columns] { flex-direction: column !important; }
+      }
+      @media (max-width: 640px) {
+        .mobile-wrap { flex-wrap: wrap !important; }
+        .mobile-stack-input { flex-direction: column !important; align-items: flex-start !important; width: 100% !important; }
+        .mobile-input-w { width: 100% !important; }
+        .hide-mobile { display: none !important; }
+        .show-mobile-inline { display: inline-flex !important; align-items: center; gap: 4px; }
+      }
+      @media (max-width: 480px) {
+        .controls-divider { width: 100% !important; height: 1px !important; margin: 8px 0 !important; }
+        .mobile-btn-text { display: none !important; }
       }
     </style>
   </head>

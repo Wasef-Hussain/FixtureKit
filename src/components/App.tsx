@@ -98,7 +98,10 @@ export default function App() {
       </div>
 
       <footer style={S.footer}>
-        <a href="https://github.com/Wasef-Hussain/FixtureKit/issues/new" target="_blank" rel="noopener noreferrer" style={S.footerLink}>Report Issue</a>
+        <a href="https://github.com/Wasef-Hussain/FixtureKit/issues/new" target="_blank" rel="noopener noreferrer" style={S.footerLink}>
+          <span className="hide-mobile">Report Issue</span>
+          <span className="show-mobile-inline" style={{ display: 'none', fontSize: '16px' }}>⚠️</span>
+        </a>
       </footer>
     </div>
   )
@@ -109,7 +112,8 @@ const S: Record<string, React.CSSProperties> = {
     maxWidth: '1180px',
     margin: '0 auto',
     padding: '32px 24px 48px',
-    height: '100vh',
+    minHeight: '100vh',
+    height: 'auto',
     boxSizing: 'border-box',
     display: 'flex',
     flexDirection: 'column',
@@ -235,6 +239,7 @@ const S: Record<string, React.CSSProperties> = {
     textTransform: 'uppercase',
     color: color.textSubtle,
     paddingLeft: '4px',
+    marginBottom: '8px',
   },
   paneDot: {
     width: '6px',

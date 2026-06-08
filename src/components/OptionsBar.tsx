@@ -45,13 +45,14 @@ export default function OptionsBar({
         />
       </div>
 
-      <div style={styles.divider} />
+      <div style={styles.divider} className="controls-divider" />
 
-      <div style={styles.group}>
+      <div style={styles.group} className="mobile-stack-input">
         <label style={styles.label}>Variable name</label>
         <input
           type="text"
           style={styles.varInput}
+          className="mobile-input-w"
           value={varName}
           onChange={(e) => onVarNameChange(e.target.value)}
           placeholder="auto (from schema)"
@@ -60,7 +61,7 @@ export default function OptionsBar({
         />
       </div>
 
-      <div style={styles.divider} />
+      <div style={styles.divider} className="controls-divider" />
 
       <div style={styles.group}>
         <div style={styles.adversarialLabel} title="Inject XSS, SQLi, and boundary values to stress-test your code">
@@ -87,7 +88,7 @@ export default function OptionsBar({
         </div>
       </div>
 
-      <div style={styles.divider} />
+      <div style={styles.divider} className="controls-divider" />
 
       <div style={styles.group}>
         <div style={styles.adversarialLabel} title="Generate completely random data on every shuffle">

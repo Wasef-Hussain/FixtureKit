@@ -24,7 +24,7 @@ import { EXAMPLES } from '../lib/examples'
 export default function InputPane({ value, onChange, mode, onModeChange, error, loading, disabled }: Props) {
   return (
     <div style={styles.wrapper}>
-      <div style={styles.toggleRow} role="tablist" aria-label="Input type">
+      <div style={styles.toggleRow} role="tablist" aria-label="Input type" className="mobile-wrap">
         <button
           role="tab"
           aria-selected={mode === 'ts'}
