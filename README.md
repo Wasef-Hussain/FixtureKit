@@ -9,7 +9,7 @@ FixtureKit is a browser-based tool that generates realistic mock data from your 
 ## What it does
 
 1. Paste a TypeScript `interface` or `type`, or a Zod `z.object(...)` schema
-2. Choose how many fixtures you want (1–5)
+2. Choose how many fixtures you want (1–100)
 3. Pick an output format: **TypeScript**, **JSON**, **MSW**, or **Playwright**
 4. Copy or download — drop straight into tests, mocks, or API stubs
 
@@ -34,6 +34,9 @@ Toggle **Adversarial mode** to inject stress-test values:
 - Random `null` / `undefined` on optional fields
 
 Useful for verifying sanitization, validation, and null-handling in your app.
+
+### Shareable URLs
+Click **Copy link** in the output toolbar to copy a URL that encodes your schema, mode, fixture count, and output format. Anyone who opens the link gets the schema pre-loaded instantly — no backend, no storage, encoded in the URL hash.
 
 ## Example
 
@@ -89,7 +92,7 @@ export const mockUserHandler = http.get('/api/endpoint', () => {
 
 **Zod:** `z.object`, `z.string`, `z.number`, `z.boolean`, `z.date`, `z.array`, `z.enum`, `z.union`, `z.literal`, `.optional()`, `.nullable()`
 
-Generics, utility types, `.refine`, `.transform`, and other advanced features are out of scope and return a clear error.
+Supports `Partial<T>`, `Pick<T>`, `Omit<T>`, `Required<T>`. Generics, mapped types, `.refine`, `.transform`, and other advanced features are out of scope and return a clear error.
 
 ## Testing
 
