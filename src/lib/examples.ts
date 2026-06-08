@@ -1,0 +1,6 @@
+export const EXAMPLES = {
+  prismaUser: `export interface PrismaUser {\n  id: string;\n  email: string;\n  firstName: string;\n  lastName: string;\n  avatarUrl: string;\n  role: "ADMIN" | "USER" | "GUEST";\n  isActive: boolean;\n  createdAt: Date;\n  updatedAt: Date;\n}`,
+  nextAuthSession: `export type Session = {\n  user?: {\n    name?: string | null\n    email?: string | null\n    image?: string | null\n  }\n  expires: ISODateString\n}\ntype ISODateString = string`,
+  shopifyProduct: `export interface ShopifyProduct {\n  id: string;\n  title: string;\n  body_html: string;\n  vendor: string;\n  product_type: string;\n  created_at: string;\n  handle: string;\n  updated_at: string;\n  published_at: string;\n  status: "active" | "archived" | "draft";\n  tags: string;\n}`,
+  stripeCustomer: `export interface StripeCustomer {\n  id: string;\n  object: "customer";\n  address: Address | null;\n  balance: number;\n  created: number;\n  currency: string;\n  default_source: string | null;\n  delinquent: boolean;\n  description: string | null;\n  email: string | null;\n  phone: string | null;\n}\n\ninterface Address {\n  city: string | null;\n  country: string | null;\n  line1: string | null;\n  line2: string | null;\n  postal_code: string | null;\n  state: string | null;\n}`
+}

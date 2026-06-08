@@ -19,6 +19,7 @@ import { generateFixture, type FixtureOutput } from '../lib/generator/generateFi
 // Zod parser is lightweight (no dependencies) — import eagerly.
 import { parseZod } from '../lib/parser/parseZod'
 import { Analytics } from '../lib/analytics'
+import { EXAMPLES } from '../lib/examples'
 
 export type Mode = 'ts' | 'zod'
 
@@ -72,7 +73,7 @@ const getInitialState = () => {
 export function useFixtureGen(): FixtureGenState {
   const initial = getInitialState()
 
-  const [inputText, setInputText] = useState(initial?.inputText ?? '')
+  const [inputText, setInputText] = useState(initial?.inputText ?? EXAMPLES.prismaUser)
   const [mode, setMode] = useState<Mode>(initial?.mode ?? 'ts')
   const [count, setCount] = useState(initial?.count ?? 1)
   const [customVarName, setCustomVarName] = useState('')

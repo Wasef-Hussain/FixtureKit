@@ -33,9 +33,8 @@ export default function App() {
           </div>
         </div>
         <p style={S.subtitle}>
-          <span style={{color: color.accent, fontWeight: 500, display: 'inline-block', marginBottom: '8px'}}>Runs entirely in your browser. No API calls. No schema leaves your machine.</span><br/>
-          Paste a TypeScript interface or Zod schema — get realistic fixtures in{' '}
-          <strong style={S.subtitleStrong}>TypeScript, JSON, MSW, or Playwright</strong>.
+          Generate realistic mock data from TypeScript & Zod schemas in seconds.<br/>
+          <span style={{color: color.accent, fontWeight: 500, display: 'inline-block', marginTop: '8px'}}>Runs entirely in your browser. No API calls. No schema leaves your machine.</span>
         </p>
         
         <div style={S.featureBadges as React.CSSProperties}>
