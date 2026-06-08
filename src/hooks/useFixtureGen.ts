@@ -49,15 +49,36 @@ export interface FixtureGenState {
 const DEBOUNCE_MS = 300
 const IDENTIFIER_RE = /^[a-zA-Z_$][a-zA-Z0-9_$]*$/
 
+const getInitialState = () => {
+  try {
+    if (typeof window !== 'undefined' && window.location.hash.length > 1) {
+      const hash = window.location.hash.slice(1)
+      const decoded = JSON.parse(decodeURIComponent(atob(hash)))
+      return {
+        inputText: decoded.inputText ?? '',
+        mode: (decoded.mode as Mode) ?? 'ts',
+        activeTab: (decoded.activeTab as OutputTab) ?? 'ts',
+        count: decoded.count ?? 1,
+        isAdversarial: decoded.isAdversarial ?? false,
+      }
+    }
+  } catch (e) {
+    // ignore decoding errors
+  }
+  return null
+}
+
 export function useFixtureGen(): FixtureGenState {
-  const [inputText, setInputText] = useState('')
-  const [mode, setMode] = useState<Mode>('ts')
-  const [count, setCount] = useState(1)
+  const initial = getInitialState()
+
+  const [inputText, setInputText] = useState(initial?.inputText ?? '')
+  const [mode, setMode] = useState<Mode>(initial?.mode ?? 'ts')
+  const [count, setCount] = useState(initial?.count ?? 1)
   const [customVarName, setCustomVarName] = useState('')
-  const [isAdversarial, setIsAdversarial] = useState(false)
+  const [isAdversarial, setIsAdversarial] = useState(initial?.isAdversarial ?? false)
   const [isRandomized, setIsRandomized] = useState(false)
   const [baseSeed, setBaseSeed] = useState(0)
-  const [activeTab, setActiveTab] = useState<OutputTab>('ts')
+  const [activeTab, setActiveTab] = useState<OutputTab>(initial?.activeTab ?? 'ts')
   const [output, setOutput] = useState<FixtureOutput | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
@@ -92,6 +113,16 @@ export function useFixtureGen(): FixtureGenState {
 
   // Lazy-loaded TS parser. Null until first use.
   const tsParserRef = useRef<((source: string) => ParseResult) | null>(null)
+
+  useEffect(() => {
+    try {
+      const state = { inputText, mode, activeTab, count, isAdversarial }
+      const hash = btoa(encodeURIComponent(JSON.stringify(state)))
+      window.history.replaceState(null, '', '#' + hash)
+    } catch (e) {
+      // ignore encoding errors
+    }
+  }, [inputText, mode, activeTab, count, isAdversarial])
 
   useEffect(() => {
     const timer = setTimeout(() => {

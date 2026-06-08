@@ -20,6 +20,16 @@ export default function App() {
           <div style={S.badges}>
             <span style={S.badge}>Runs in browser</span>
             <span style={S.badge}>No signup</span>
+            <a 
+              href="https://github.com/Wasef-Hussain/FixtureKit" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              style={S.githubBtn}
+              onMouseOver={(e) => e.currentTarget.style.borderColor = color.accent}
+              onMouseOut={(e) => e.currentTarget.style.borderColor = color.border}
+            >
+              ⭐ Star on GitHub
+            </a>
           </div>
         </div>
         <p style={S.subtitle}>
@@ -77,8 +87,6 @@ export default function App() {
       </div>
 
       <footer style={S.footer}>
-        <a href="https://github.com/Wasef-Hussain/FixtureKit" target="_blank" rel="noopener noreferrer" style={S.footerLink}>GitHub</a>
-        <span style={S.footerSep}>·</span>
         <a href="https://github.com/Wasef-Hussain/FixtureKit/issues/new" target="_blank" rel="noopener noreferrer" style={S.footerLink}>Report Issue</a>
       </footer>
     </div>
@@ -143,6 +151,20 @@ const S: Record<string, React.CSSProperties> = {
     background: color.accentSoft,
     color: color.accent,
     border: `1px solid rgba(79, 70, 229, 0.15)`,
+  },
+  githubBtn: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '6px',
+    fontSize: '12px',
+    fontWeight: 600,
+    padding: '4px 12px',
+    borderRadius: radius.pill,
+    background: color.surfaceMuted,
+    color: color.textMuted,
+    border: `1px solid ${color.border}`,
+    textDecoration: 'none',
+    transition: 'border-color 0.15s ease',
   },
   subtitle: {
     fontSize: '15px',

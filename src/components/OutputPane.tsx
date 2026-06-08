@@ -76,6 +76,7 @@ export default function OutputPane({ output, activeTab, onTabChange }: Props) {
           })}
         </div>
         <div style={styles.actions}>
+          <CopyLinkBtn disabled={empty} />
           <CopyBtn code={activeCode} disabled={empty} />
           <DownloadBtn code={activeCode} disabled={empty} meta={meta} />
         </div>
@@ -130,6 +131,43 @@ function CopyBtn({ code, disabled }: { code: string; disabled: boolean }) {
       disabled={disabled}
     >
       {copied ? '✓ Copied' : 'Copy'}
+    </button>
+  )
+}
+
+function CopyLinkBtn({ disabled }: { disabled: boolean }) {
+  const [copied, setCopied] = useState(false)
+
+  function handleCopy() {
+    if (disabled) return
+    const url = window.location.href
+    navigator.clipboard.writeText(url).then(
+      () => {
+        setCopied(true)
+        setTimeout(() => setCopied(false), 1500)
+      },
+      () => {
+        const ta = document.createElement('textarea')
+        ta.value = url
+        ta.style.position = 'fixed'
+        ta.style.opacity = '0'
+        document.body.appendChild(ta)
+        ta.select()
+        document.execCommand('copy')
+        document.body.removeChild(ta)
+        setCopied(true)
+        setTimeout(() => setCopied(false), 1500)
+      },
+    )
+  }
+
+  return (
+    <button
+      style={{ ...styles.actionBtn, ...(copied ? styles.btnCopied : {}) }}
+      onClick={handleCopy}
+      disabled={disabled}
+    >
+      {copied ? '✓ Copied!' : 'Copy link'}
     </button>
   )
 }
