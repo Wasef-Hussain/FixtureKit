@@ -1,5 +1,6 @@
 import type { Mode } from '../hooks/useFixtureGen'
 import { theme } from '../styles/theme'
+import { Analytics } from '../lib/analytics'
 
 interface Props {
   value: string
@@ -32,7 +33,10 @@ export default function InputPane({ value, onChange, mode, onModeChange, error, 
           role="tab"
           aria-selected={mode === 'ts'}
           style={{ ...styles.toggleBtn, ...(mode === 'ts' ? styles.toggleBtnActive : {}) }}
-          onClick={() => onModeChange('ts')}
+          onClick={() => {
+            Analytics.track('input_mode_changed', { mode: 'ts' })
+            onModeChange('ts')
+          }}
           disabled={disabled}
         >
           TypeScript
@@ -41,7 +45,10 @@ export default function InputPane({ value, onChange, mode, onModeChange, error, 
           role="tab"
           aria-selected={mode === 'zod'}
           style={{ ...styles.toggleBtn, ...(mode === 'zod' ? styles.toggleBtnActive : {}) }}
-          onClick={() => onModeChange('zod')}
+          onClick={() => {
+            Analytics.track('input_mode_changed', { mode: 'zod' })
+            onModeChange('zod')
+          }}
           disabled={disabled}
         >
           Zod
@@ -73,8 +80,25 @@ export default function InputPane({ value, onChange, mode, onModeChange, error, 
 
       {error && !loading && (
         <div style={styles.errorBanner}>
-          <span style={styles.errorIcon}>!</span>
-          {error}
+          <div style={styles.errorHeader}>
+            <span style={styles.errorIcon}>!</span>
+            {error}
+          </div>
+          <div style={styles.feedbackBox}>
+            <p style={styles.feedbackText}>
+              <strong>Schema failed?</strong> Help improve FixtureKit by submitting the schema that broke it.
+            </p>
+            <a 
+              href={`https://github.com/Wasef-Hussain/FixtureKit/issues/new?title=Parser+Failure&body=${encodeURIComponent(
+                `**Error Message:**\n\`${error}\`\n\n**Environment:**\n- Browser: ${typeof window !== 'undefined' ? window.navigator.userAgent : 'Unknown'}\n- Version: 0.1.0\n\n**Failing Schema (Optional - please remove proprietary info):**\n\`\`\`ts\n\n\`\`\``
+              )}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={styles.feedbackBtn}
+            >
+              Report Issue on GitHub
+            </a>
+          </div>
         </div>
       )}
     </div>
@@ -153,9 +177,9 @@ const styles: Record<string, React.CSSProperties> = {
   },
   errorBanner: {
     display: 'flex',
-    alignItems: 'flex-start',
-    gap: '10px',
-    padding: '10px 14px',
+    flexDirection: 'column',
+    gap: '12px',
+    padding: '12px 14px',
     borderRadius: radius.sm,
     fontSize: '13px',
     fontFamily: font.sans,
@@ -163,6 +187,38 @@ const styles: Record<string, React.CSSProperties> = {
     color: color.danger,
     border: `1px solid #fecaca`,
     lineHeight: 1.5,
+  },
+  errorHeader: {
+    display: 'flex',
+    alignItems: 'flex-start',
+    gap: '10px',
+  },
+  feedbackBox: {
+    marginTop: '4px',
+    paddingTop: '12px',
+    borderTop: '1px solid #fecaca',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '8px',
+  },
+  feedbackText: {
+    margin: 0,
+    fontSize: '12.5px',
+    color: '#b91c1c',
+  },
+  feedbackBtn: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: '6px 12px',
+    background: '#dc2626',
+    color: '#fff',
+    textDecoration: 'none',
+    borderRadius: radius.sm,
+    fontWeight: 600,
+    fontSize: '12px',
+    width: 'fit-content',
+    boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
   },
   errorIcon: {
     display: 'inline-flex',

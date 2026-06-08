@@ -18,6 +18,7 @@ import type { ParseResult } from '../lib/types'
 import { generateFixture, type FixtureOutput } from '../lib/generator/generateFixture'
 // Zod parser is lightweight (no dependencies) — import eagerly.
 import { parseZod } from '../lib/parser/parseZod'
+import { Analytics } from '../lib/analytics'
 
 export type Mode = 'ts' | 'zod'
 
@@ -177,10 +178,17 @@ export function useFixtureGen(): FixtureGenState {
     }
 
     if (!result.ok) {
+      // Avoid tracking trivial "empty" or "still typing" parse failures to reduce noise.
+      // E.g. "Property or signature expected."
+      if (!result.error.includes('Property or signature expected')) {
+        Analytics.track('parse_failure', { error_type: result.error, mode: currentMode })
+      }
       setError(result.error)
       setOutput(null)
       return
     }
+
+    Analytics.track('parse_success', { mode: currentMode })
 
     setError(null)
 
@@ -213,6 +221,7 @@ export function useFixtureGen(): FixtureGenState {
       baseSeed: currentBaseSeed,
     })
 
+    Analytics.track('schema_generated', { field_count: result.fields.length })
     setOutput(generated)
   }
 
