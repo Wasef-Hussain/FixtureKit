@@ -37,7 +37,7 @@ function deriveVarName(rootName: string): string {
   return 'mock' + rootName.charAt(0).toUpperCase() + rootName.slice(1)
 }
 
-function resolveType(node: ts.TypeNode, sourceFile: ts.SourceFile): FieldType {
+function resolveType(node: ts.TypeNode, sourceFile: ts.SourceFile, resolvingTypes = new Set<string>()): FieldType {
   switch (node.kind) {
     case ts.SyntaxKind.StringKeyword: return { kind: 'string' }
     case ts.SyntaxKind.NumberKeyword: return { kind: 'number' }
@@ -48,7 +48,7 @@ function resolveType(node: ts.TypeNode, sourceFile: ts.SourceFile): FieldType {
 
     case ts.SyntaxKind.ArrayType: {
       const arr = node as ts.ArrayTypeNode
-      const itemType = resolveType(arr.elementType, sourceFile)
+      const itemType = resolveType(arr.elementType, sourceFile, resolvingTypes)
       return { kind: 'array', itemType }
     }
 
@@ -59,19 +59,44 @@ function resolveType(node: ts.TypeNode, sourceFile: ts.SourceFile): FieldType {
       if (ts.isIdentifier(name)) refName = name.text
       else if (ts.isQualifiedName(name)) refName = name.right.text
 
+      if (resolvingTypes.has(refName)) {
+        throw new Error("Recursive types are not supported.")
+      }
+      const newResolving = new Set(resolvingTypes)
+      newResolving.add(refName)
+
+      if (refName === 'Record' && ref.typeArguments?.length === 2) {
+        return { 
+          kind: 'object', 
+          fields: [{
+            name: 'key',
+            type: resolveType(ref.typeArguments[1], sourceFile, newResolving),
+            optional: false
+          }]
+        }
+      }
+
       if (refName === 'Date') return { kind: 'date' }
 
       if (refName === 'Array' && ref.typeArguments?.length === 1) {
-        return { kind: 'array', itemType: resolveType(ref.typeArguments[0], sourceFile) }
+        return { kind: 'array', itemType: resolveType(ref.typeArguments[0], sourceFile, resolvingTypes) }
       }
       if (refName === 'ReadonlyArray' && ref.typeArguments?.length === 1) {
-        return { kind: 'array', itemType: resolveType(ref.typeArguments[0], sourceFile) }
+        return { kind: 'array', itemType: resolveType(ref.typeArguments[0], sourceFile, resolvingTypes) }
       }
 
       // Utility types
-      const UTILITY = new Set(['Partial', 'Required', 'Pick', 'Omit'])
+      const UTILITY = new Set(['Partial', 'Required', 'Pick', 'Omit', 'Readonly'])
       if (UTILITY.has(refName) && ref.typeArguments && ref.typeArguments.length >= 1) {
-        return applyUtilityTransformation(refName, ref.typeArguments, sourceFile)
+        return applyUtilityTransformation(refName, ref.typeArguments, sourceFile, newResolving)
+      }
+
+      const decl = findDeclaration(sourceFile, refName)
+      if (decl && (ts.isInterfaceDeclaration(decl) || ts.isTypeAliasDeclaration(decl))) {
+        const extracted = extractFieldsFromDecl(decl, sourceFile, newResolving)
+        if (extracted) {
+          return { kind: 'object', fields: extracted.fields }
+        }
       }
 
       return { kind: 'unknown' }
@@ -79,13 +104,13 @@ function resolveType(node: ts.TypeNode, sourceFile: ts.SourceFile): FieldType {
 
     case ts.SyntaxKind.TypeLiteral: {
       const lit = node as ts.TypeLiteralNode
-      const fields = lit.members.map(m => resolvePropertySignature(m, sourceFile)).filter((f): f is Field => f !== null)
+      const fields = lit.members.map(m => resolvePropertySignature(m, sourceFile, resolvingTypes)).filter((f): f is Field => f !== null)
       return { kind: 'object', fields }
     }
 
     case ts.SyntaxKind.UnionType: {
       const union = node as ts.UnionTypeNode
-      const types = union.types.map(t => resolveType(t, sourceFile))
+      const types = union.types.map(t => resolveType(t, sourceFile, resolvingTypes))
       const allStringLiteral = types.every(t => t.kind === 'literal' && typeof t.value === 'string')
       if (allStringLiteral && types.length > 0) {
         return { kind: 'enum', values: types.map(t => (t as { kind: 'literal'; value: string }).value as string) }
@@ -107,7 +132,7 @@ function resolveType(node: ts.TypeNode, sourceFile: ts.SourceFile): FieldType {
 
     case ts.SyntaxKind.ParenthesizedType: {
       const pt = node as ts.ParenthesizedTypeNode
-      return resolveType(pt.type, sourceFile)
+      return resolveType(pt.type, sourceFile, resolvingTypes)
     }
 
     default: return { kind: 'unknown' }
@@ -127,29 +152,29 @@ function resolvePropertyName(node: ts.PropertySignature): string {
   return 'unknownKey'
 }
 
-function resolvePropertySignature(node: ts.Node, sourceFile: ts.SourceFile): Field | null {
+function resolvePropertySignature(node: ts.Node, sourceFile: ts.SourceFile, resolvingTypes = new Set<string>()): Field | null {
   if (!ts.isPropertySignature(node)) return null
   if (!node.type) return null
 
   const name = resolvePropertyName(node)
   const optional = node.questionToken !== undefined
-  const fieldType = resolveType(node.type, sourceFile)
+  const fieldType = resolveType(node.type, sourceFile, resolvingTypes)
 
   return { name, type: fieldType, optional }
 }
 
-function applyUtilityTransformation(utilityName: string, typeArgs: ts.NodeArray<ts.TypeNode>, sourceFile: ts.SourceFile): FieldType {
+function applyUtilityTransformation(utilityName: string, typeArgs: ts.NodeArray<ts.TypeNode>, sourceFile: ts.SourceFile, resolvingTypes = new Set<string>()): FieldType {
   const tNode = typeArgs[0]
   let baseFields: Field[] | null = null
 
   if (ts.isTypeLiteralNode(tNode)) {
-    const objType = resolveType(tNode, sourceFile)
+    const objType = resolveType(tNode, sourceFile, resolvingTypes)
     if (objType.kind === 'object') baseFields = objType.fields
   } else if (ts.isTypeReferenceNode(tNode) && ts.isIdentifier(tNode.typeName)) {
     const tName = tNode.typeName.text
     const decl = findDeclaration(sourceFile, tName)
     if (!decl) throw new Error(`Cannot resolve ${utilityName}<T>: T (${tName}) must be defined in the same input.`)
-    const extracted = extractFieldsFromDecl(decl, sourceFile)
+    const extracted = extractFieldsFromDecl(decl, sourceFile, resolvingTypes)
     if (extracted) baseFields = extracted.fields
   }
 
@@ -202,11 +227,11 @@ function checkUnsupportedTypeReference(node: ts.TypeReferenceNode): string | nul
 
   const hasTypeArgs = node.typeArguments && node.typeArguments.length > 0
 
-  const SUPPORTED = new Set(['Date', 'Array', 'ReadonlyArray', 'Partial', 'Required', 'Pick', 'Omit'])
+  const SUPPORTED = new Set(['Date', 'Array', 'ReadonlyArray', 'Partial', 'Required', 'Pick', 'Omit', 'Record', 'Readonly'])
   if (SUPPORTED.has(refName)) return null
 
   if (hasTypeArgs) {
-    const UTILITY = new Set(['Readonly', 'Record', 'Exclude', 'Extract', 'NonNullable', 'Parameters', 'ReturnType', 'InstanceType', 'Awaited'])
+    const UTILITY = new Set(['Exclude', 'Extract', 'NonNullable', 'Parameters', 'ReturnType', 'InstanceType', 'Awaited'])
     if (UTILITY.has(refName)) return `Unsupported type: utility type "${refName}" is not yet supported.`
     return `Unsupported type: generic type "${refName}" is not yet supported.`
   }
@@ -241,7 +266,7 @@ function detectUnsupported(sourceFile: ts.SourceFile): string | null {
       const t = ts.isParenthesizedTypeNode(stmt.type) ? stmt.type.type : stmt.type
       if (ts.isTypeReferenceNode(t)) {
         const refName = ts.isIdentifier(t.typeName) ? t.typeName.text : ''
-        if (!['Partial', 'Required', 'Pick', 'Omit'].includes(refName)) {
+        if (!['Partial', 'Required', 'Pick', 'Omit', 'Record', 'Readonly'].includes(refName)) {
           return `Unsupported type: type aliases must be object shapes ("{ ... }"). Found: TypeReference (${refName}).`
         }
       } else if (!ts.isTypeLiteralNode(t)) {
@@ -311,12 +336,12 @@ function checkTypeNodeForUnsupported(node: ts.TypeNode): string | null {
   }
 }
 
-function extractFieldsFromDecl(stmt: ts.Statement, sourceFile: ts.SourceFile): { rootName: string; fields: Field[] } | null {
+function extractFieldsFromDecl(stmt: ts.Statement, sourceFile: ts.SourceFile, resolvingTypes = new Set<string>()): { rootName: string; fields: Field[] } | null {
   if (ts.isInterfaceDeclaration(stmt)) {
     const rootName = stmt.name.text
     const fields: Field[] = []
     for (const member of stmt.members) {
-      const field = resolvePropertySignature(member, sourceFile)
+      const field = resolvePropertySignature(member, sourceFile, resolvingTypes)
       if (field) fields.push(field)
     }
     return { rootName, fields }
@@ -330,12 +355,8 @@ function extractFieldsFromDecl(stmt: ts.Statement, sourceFile: ts.SourceFile): {
     const rootName = stmt.name.text
 
     if (ts.isTypeReferenceNode(typeNode)) {
-      const refName = ts.isIdentifier(typeNode.typeName) ? typeNode.typeName.text : ''
-      const SUPPORTED = new Set(['Partial', 'Required', 'Pick', 'Omit'])
-      if (SUPPORTED.has(refName) && typeNode.typeArguments) {
-        const resolved = applyUtilityTransformation(refName, typeNode.typeArguments, sourceFile)
-        if (resolved.kind === 'object') return { rootName, fields: resolved.fields }
-      }
+      const resolved = resolveType(typeNode, sourceFile, resolvingTypes)
+      if (resolved.kind === 'object') return { rootName, fields: resolved.fields }
     }
 
     if (!ts.isTypeLiteralNode(typeNode)) return null
@@ -343,7 +364,7 @@ function extractFieldsFromDecl(stmt: ts.Statement, sourceFile: ts.SourceFile): {
     const lit = typeNode as ts.TypeLiteralNode
     const fields: Field[] = []
     for (const member of lit.members) {
-      const field = resolvePropertySignature(member, sourceFile)
+      const field = resolvePropertySignature(member, sourceFile, resolvingTypes)
       if (field) fields.push(field)
     }
     return { rootName, fields }
@@ -353,11 +374,45 @@ function extractFieldsFromDecl(stmt: ts.Statement, sourceFile: ts.SourceFile): {
 }
 
 function extractFields(sourceFile: ts.SourceFile): { rootName: string; fields: Field[] } | null {
+  const candidates: { decl: ts.Statement; extracted: { rootName: string; fields: Field[] } }[] = []
+
   for (const stmt of sourceFile.statements) {
     const res = extractFieldsFromDecl(stmt, sourceFile)
-    if (res) return res
+    if (res) candidates.push({ decl: stmt, extracted: res })
   }
-  return null
+
+  if (candidates.length === 0) return null
+
+  // 1. Export default
+  for (const c of candidates) {
+    if (c.decl.modifiers && c.decl.modifiers.some(m => m.kind === ts.SyntaxKind.DefaultKeyword)) {
+      return c.extracted
+    }
+  }
+
+  // 2. Exported type alias
+  for (const c of candidates) {
+    if (ts.isTypeAliasDeclaration(c.decl) && c.decl.modifiers && c.decl.modifiers.some(m => m.kind === ts.SyntaxKind.ExportKeyword)) {
+      return c.extracted
+    }
+  }
+
+  // 3. Exported interface
+  for (const c of candidates) {
+    if (ts.isInterfaceDeclaration(c.decl) && c.decl.modifiers && c.decl.modifiers.some(m => m.kind === ts.SyntaxKind.ExportKeyword)) {
+      return c.extracted
+    }
+  }
+
+  // 4. Last type alias
+  for (let i = candidates.length - 1; i >= 0; i--) {
+    if (ts.isTypeAliasDeclaration(candidates[i].decl)) {
+      return candidates[i].extracted
+    }
+  }
+
+  // 5. Last interface (or fallback)
+  return candidates[candidates.length - 1].extracted
 }
 
 export function parseTypeScript(source: string): ParseResult {

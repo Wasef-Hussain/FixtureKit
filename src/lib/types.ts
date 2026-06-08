@@ -13,6 +13,7 @@ export type FieldType =
   | { kind: 'literal'; value: string | number | boolean }
   | { kind: 'array'; itemType: FieldType }
   | { kind: 'object'; fields: Field[] }
+  | { kind: 'record'; keyType: FieldType; valueType: FieldType }
   | { kind: 'union'; types: FieldType[] }
   | { kind: 'enum'; values: string[] }
 
