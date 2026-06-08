@@ -18,8 +18,6 @@ export type SemanticCategory =
   | 'QUANTITY'
   | 'AGE'
   | 'STATUS'
-  | 'DESCRIPTION'
-  | 'TITLE'
   | 'SLUG'
   | 'COMPANY'
   | 'JOB_TITLE'
@@ -91,7 +89,7 @@ function normalizeExact(fieldName: string): string {
 const EXACT_MATCH: Record<string, SemanticCategory> = {
   id: 'ID', uuid: 'ID', guid: 'ID',
   userid: 'ID', productid: 'ID', orderid: 'ID', itemid: 'ID', postid: 'ID',
-  name: 'PERSON_NAME', fullname: 'PERSON_NAME', displayname: 'PERSON_NAME',
+  fullname: 'PERSON_NAME', displayname: 'PERSON_NAME',
   firstname: 'FIRST_NAME', givenname: 'FIRST_NAME',
   lastname: 'LAST_NAME', surname: 'LAST_NAME', familyname: 'LAST_NAME',
   email: 'EMAIL', emailaddress: 'EMAIL',
@@ -108,10 +106,6 @@ const EXACT_MATCH: Record<string, SemanticCategory> = {
   count: 'QUANTITY', quantity: 'QUANTITY', stock: 'QUANTITY', qty: 'QUANTITY',
   age: 'AGE',
   status: 'STATUS', state: 'STATUS',
-  description: 'DESCRIPTION', bio: 'DESCRIPTION', summary: 'DESCRIPTION',
-  body: 'DESCRIPTION', content: 'DESCRIPTION', notes: 'DESCRIPTION', note: 'DESCRIPTION',
-  overview: 'DESCRIPTION', excerpt: 'DESCRIPTION',
-  title: 'TITLE', headline: 'TITLE', subject: 'TITLE',
   slug: 'SLUG', handle: 'SLUG', username: 'SLUG',
   company: 'COMPANY', companyname: 'COMPANY', organization: 'COMPANY', organisation: 'COMPANY',
   role: 'JOB_TITLE', jobtitle: 'JOB_TITLE', position: 'JOB_TITLE', occupation: 'JOB_TITLE',
@@ -193,9 +187,6 @@ const SINGLE_TOKEN: Record<string, SemanticCategory> = {
   count: 'QUANTITY', quantity: 'QUANTITY', stock: 'QUANTITY', qty: 'QUANTITY',
   age: 'AGE',
   status: 'STATUS', state: 'STATUS',
-  description: 'DESCRIPTION', bio: 'DESCRIPTION', summary: 'DESCRIPTION',
-  body: 'DESCRIPTION', content: 'DESCRIPTION', notes: 'DESCRIPTION',
-  title: 'TITLE', headline: 'TITLE',
   slug: 'SLUG', handle: 'SLUG', username: 'SLUG',
   company: 'COMPANY', organization: 'COMPANY', organisation: 'COMPANY',
   role: 'JOB_TITLE', position: 'JOB_TITLE', occupation: 'JOB_TITLE',
@@ -208,7 +199,6 @@ const SINGLE_TOKEN: Record<string, SemanticCategory> = {
   color: 'COLOR', colour: 'COLOR', hex: 'COLOR', background: 'COLOR',
   version: 'VERSION', semver: 'VERSION',
   token: 'TOKEN', key: 'TOKEN', secret: 'TOKEN',
-  name: 'PERSON_NAME',
   ip: 'IP',
 }
 

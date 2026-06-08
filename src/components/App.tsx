@@ -33,10 +33,22 @@ export default function App() {
           </div>
         </div>
         <p style={S.subtitle}>
+          <span style={{color: color.accent, fontWeight: 500, display: 'inline-block', marginBottom: '8px'}}>Runs entirely in your browser. No API calls. No schema leaves your machine.</span><br/>
           Paste a TypeScript interface or Zod schema — get realistic fixtures in{' '}
           <strong style={S.subtitleStrong}>TypeScript, JSON, MSW, or Playwright</strong>.
-          Nothing leaves your machine.
         </p>
+        
+        <div style={S.featureBadges as React.CSSProperties}>
+          <span style={S.featureBadge as React.CSSProperties}>✓ Interfaces</span>
+          <span style={S.featureBadge as React.CSSProperties}>✓ Type Aliases</span>
+          <span style={S.featureBadge as React.CSSProperties}>✓ Record</span>
+          <span style={S.featureBadge as React.CSSProperties}>✓ Pick</span>
+          <span style={S.featureBadge as React.CSSProperties}>✓ Omit</span>
+          <span style={S.featureBadge as React.CSSProperties}>✓ Partial</span>
+          <span style={S.featureBadge as React.CSSProperties}>✓ Readonly</span>
+          <span style={S.featureBadge as React.CSSProperties}>✓ Required</span>
+          <span style={S.featureBadge as React.CSSProperties}>✓ Literal Unions</span>
+        </div>
       </header>
 
       <OptionsBar
@@ -176,6 +188,29 @@ const S: Record<string, React.CSSProperties> = {
   subtitleStrong: {
     color: color.text,
     fontWeight: 600,
+  },
+  featureBadges: {
+    display: 'flex',
+    flexWrap: 'wrap',
+    gap: '8px',
+    justifyContent: 'center',
+    maxWidth: '800px',
+    margin: '0 auto',
+    marginTop: '16px',
+  },
+  featureBadge: {
+    fontSize: '12px',
+    color: color.textMuted,
+    background: color.surface,
+    padding: '4px 10px',
+    borderRadius: '12px',
+    border: `1px solid ${color.border}`,
+  },
+  options: {
+    display: 'flex',
+    gap: '20px',
+    flex: 1,
+    minHeight: 0,
   },
   columns: {
     display: 'flex',

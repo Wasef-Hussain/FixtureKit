@@ -127,27 +127,6 @@ export const VALUE_BANK: Record<SemanticCategory, ValuePool> = {
     'approved', 'verified', 'enabled', 'open',
   ],
 
-  DESCRIPTION: [
-    'A brief description of the item.',
-    'This is a sample description for testing purposes.',
-    'An example description with relevant details.',
-    'A short overview of the content.',
-    'This item contains important information.',
-    'A comprehensive summary of the subject.',
-    'An introductory description of the topic.',
-    'Key details and information about this entry.',
-  ],
-
-  TITLE: [
-    'Getting Started with TypeScript',
-    'Introduction to Modern Web Development',
-    'Building Scalable Applications',
-    'The Complete Developer Guide',
-    'Advanced Patterns and Best Practices',
-    'Exploring New Technologies',
-    'A Practical Approach to Software Design',
-    'Mastering Full-Stack Development',
-  ],
 
   SLUG: [
     'alice-johnson', 'getting-started', 'my-first-post',

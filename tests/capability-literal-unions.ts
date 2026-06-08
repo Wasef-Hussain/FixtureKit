@@ -36,7 +36,7 @@ const testCases = [
   {
     name: 'Mixed Union (Should fail gracefully)',
     input: 'type Role = "admin" | 42',
-    expectError: 'Unsupported type: type aliases must be object shapes ("{ ... }"). Found: UnionType.'
+    expectError: 'Could not find a TypeScript interface or object-shaped type alias.'
   }
 ]
 

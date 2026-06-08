@@ -263,19 +263,6 @@ function detectUnsupported(sourceFile: ts.SourceFile): string | null {
       const typeErr = checkTypeNodeForUnsupported(stmt.type)
       if (typeErr) return typeErr
 
-      const t = ts.isParenthesizedTypeNode(stmt.type) ? stmt.type.type : stmt.type
-      if (ts.isTypeReferenceNode(t)) {
-        const refName = ts.isIdentifier(t.typeName) ? t.typeName.text : ''
-        if (!['Partial', 'Required', 'Pick', 'Omit', 'Record', 'Readonly'].includes(refName)) {
-          return `Unsupported type: type aliases must be object shapes ("{ ... }"). Found: TypeReference (${refName}).`
-        }
-      } else if (ts.isUnionTypeNode(t)) {
-        const allLiteral = t.types.every(child => ts.isLiteralTypeNode(child) && ts.isStringLiteral(child.literal))
-        if (!allLiteral) return `Unsupported type: type aliases must be object shapes ("{ ... }"). Found: UnionType.`
-      } else if (!ts.isTypeLiteralNode(t)) {
-        return `Unsupported type: type aliases must be object shapes ("{ ... }"). Found: ${ts.SyntaxKind[t.kind]}.`
-      }
-      continue
     }
 
     if (ts.isClassDeclaration(stmt)) return 'Unsupported: classes are not supported.'
