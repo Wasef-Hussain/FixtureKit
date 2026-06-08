@@ -1,6 +1,6 @@
 # FixtureKit
 
-**Paste a TypeScript interface or Zod schema. Get copy-ready fixtures in four formats.**
+**Generate fixtures, mocks, and test data from TypeScript and Zod schemas.**
 
 **Live:** https://fixture-kit.vercel.app · **GitHub:** https://github.com/Wasef-Hussain/FixtureKit
 
@@ -100,7 +100,7 @@ export const mockUserHandler = http.get('/api/endpoint', () => {
 
 **Zod:** `const Schema = z.object(...)`, `export const Schema = z.object(...)`, `z.string`, `z.number`, `z.boolean`, `z.date`, `z.array`, `z.enum`, `z.union`, `z.literal`, `.optional()`, `.nullable()`
 
-Supports `Partial<T>`, `Pick<T>`, `Omit<T>`, `Required<T>`. Generics, mapped types, `.refine`, `.transform`, and other advanced features are out of scope and return a clear error.
+Supports `Record<K, V>`, `Partial<T>`, `Pick<T>`, `Omit<T>`, `Readonly<T>`, `Required<T>`. Generics, mapped types, conditional types, `.refine`, `.transform`, and other advanced features are out of scope and will gracefully return a clear error message.
 
 ## Testing
 
