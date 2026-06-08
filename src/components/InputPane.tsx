@@ -20,9 +20,10 @@ const PLACEHOLDER: Record<Mode, string> = {
 const { font, color, radius } = theme
 
 const EXAMPLES = {
-  User: `interface User {\n  id: string\n  firstName: string\n  lastName: string\n  email: string\n  phone: string\n  role: "admin" | "editor" | "viewer"\n  isActive: boolean\n  createdAt: Date\n  address: {\n    street: string\n    city: string\n    country: string\n    zip: string\n  }\n}`,
-  Product: `interface Product {\n  id: string\n  name: string\n  slug: string\n  description: string\n  price: number\n  currency: string\n  inStock: boolean\n  tags: string[]\n  imageUrl: string\n  createdAt: Date\n}`,
-  Order: `interface Order {\n  id: string\n  status: "pending" | "processing" | "shipped" | "delivered" | "cancelled"\n  customerId: string\n  total: number\n  currency: string\n  items: {\n    productId: string\n    quantity: number\n    unitPrice: number\n  }[]\n  createdAt: Date\n  updatedAt: Date\n}`
+  prismaUser: `export interface PrismaUser {\n  id: string;\n  email: string;\n  firstName: string;\n  lastName: string;\n  avatarUrl: string;\n  role: "ADMIN" | "USER" | "GUEST";\n  isActive: boolean;\n  createdAt: Date;\n  updatedAt: Date;\n}`,
+  nextAuthSession: `export type Session = {\n  user?: {\n    name?: string | null\n    email?: string | null\n    image?: string | null\n  }\n  expires: ISODateString\n}\ntype ISODateString = string`,
+  shopifyProduct: `export interface ShopifyProduct {\n  id: string;\n  title: string;\n  body_html: string;\n  vendor: string;\n  product_type: string;\n  created_at: string;\n  handle: string;\n  updated_at: string;\n  published_at: string;\n  status: "active" | "archived" | "draft";\n  tags: string;\n}`,
+  stripeCustomer: `export interface StripeCustomer {\n  id: string;\n  object: "customer";\n  address: Address | null;\n  balance: number;\n  created: number;\n  currency: string;\n  default_source: string | null;\n  delinquent: boolean;\n  description: string | null;\n  email: string | null;\n  phone: string | null;\n}\n\ninterface Address {\n  city: string | null;\n  country: string | null;\n  line1: string | null;\n  line2: string | null;\n  postal_code: string | null;\n  state: string | null;\n}`
 }
 
 export default function InputPane({ value, onChange, mode, onModeChange, error, loading, disabled }: Props) {
@@ -56,10 +57,11 @@ export default function InputPane({ value, onChange, mode, onModeChange, error, 
       </div>
 
       <div style={styles.examplesRow}>
-        <span style={styles.examplesLabel}>Examples:</span>
-        <button style={styles.exampleBtn} onClick={() => onChange(EXAMPLES.User)} disabled={disabled}>User</button>
-        <button style={styles.exampleBtn} onClick={() => onChange(EXAMPLES.Product)} disabled={disabled}>Product</button>
-        <button style={styles.exampleBtn} onClick={() => onChange(EXAMPLES.Order)} disabled={disabled}>Order</button>
+        <span style={styles.examplesLabel}>Try one of these:</span>
+        <button style={styles.exampleBtn} onClick={() => onChange(EXAMPLES.prismaUser)} disabled={disabled}>✓ Prisma User</button>
+        <button style={styles.exampleBtn} onClick={() => onChange(EXAMPLES.nextAuthSession)} disabled={disabled}>✓ NextAuth Session</button>
+        <button style={styles.exampleBtn} onClick={() => onChange(EXAMPLES.shopifyProduct)} disabled={disabled}>✓ Shopify Product</button>
+        <button style={styles.exampleBtn} onClick={() => onChange(EXAMPLES.stripeCustomer)} disabled={disabled}>✓ Stripe Customer</button>
       </div>
 
       <textarea
@@ -236,26 +238,33 @@ const styles: Record<string, React.CSSProperties> = {
   examplesRow: {
     display: 'flex',
     alignItems: 'center',
-    gap: '6px',
-    marginBottom: '2px',
+    gap: '8px',
+    marginBottom: '8px',
+    padding: '12px 14px',
+    background: color.accentSoft,
+    border: `1px solid rgba(79, 70, 229, 0.2)`,
+    borderRadius: radius.md,
+    flexWrap: 'wrap',
   },
   examplesLabel: {
-    fontSize: '12px',
+    fontSize: '13px',
     fontFamily: font.sans,
-    color: color.textSubtle,
-    marginRight: '4px',
-    fontWeight: 500,
+    color: color.accent,
+    marginRight: '6px',
+    fontWeight: 700,
   },
   exampleBtn: {
-    padding: '3px 10px',
-    border: `1px solid ${color.border}`,
+    padding: '6px 14px',
+    border: `1px solid rgba(79, 70, 229, 0.3)`,
     borderRadius: '100px',
-    background: color.surfaceMuted,
-    color: color.textMuted,
-    fontSize: '11px',
+    background: color.surface,
+    color: color.accent,
+    fontSize: '12.5px',
     fontWeight: 600,
     fontFamily: font.sans,
     cursor: 'pointer',
     outline: 'none',
+    boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+    transition: 'all 0.15s ease',
   },
 }
