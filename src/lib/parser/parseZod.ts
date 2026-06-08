@@ -216,6 +216,15 @@ class Parser {
   parseSchema(): { fields: Field[], rootName: string } {
     let rootName = ROOT_NAME
     
+    // Skip imports
+    while (this.peek('identifier', 'import')) {
+      this.consume()
+      while (!this.peek('eof') && !this.peek('punct', ';')) {
+        this.consume()
+      }
+      this.expectPunct(';')
+    }
+
     // Optional variable assignment:
     // export const MySchema = z.object(...)
     // const MySchema = z.object(...)
@@ -234,15 +243,30 @@ class Parser {
     this.parseZ()
     this.expectPunct('.') || this.error('Expected z.object(...)')
     const methodName = this.expect('identifier') as { kind: 'identifier'; name: string } | null
-    if (!methodName || methodName.name !== 'object') {
+    if (!methodName) {
       this.error('Expected z.object(...) at the top level')
     }
-    const result = this.parseObjectContent()
+
+    let fields: Field[] = []
+
+    if (methodName.name === 'object') {
+      fields = this.parseObjectContent().fields
+    } else if (methodName.name === 'discriminatedUnion') {
+      const u = this.parseDiscriminatedUnionContent()
+      const firstObj = u.types[0]
+      if (firstObj && firstObj.kind === 'object') {
+        fields = firstObj.fields
+      } else {
+        this.error('z.discriminatedUnion at the top level must contain objects')
+      }
+    } else {
+      this.error('Expected z.object(...) or z.discriminatedUnion(...) at the top level')
+    }
     
     // Optional trailing semicolon
     while (this.expectPunct(';')) {}
     
-    return { fields: result.fields, rootName }
+    return { fields, rootName }
   }
 
   // z.object({ ... })
@@ -351,9 +375,35 @@ class Parser {
       case 'union': return this.parseUnion()
       case 'literal': return this.parseLiteral()
       case 'object': return this.parseObjectType()
+      case 'discriminatedUnion': return this.parseDiscriminatedUnionContent()
       default:
-        this.error(`Unsupported Zod method: z.${method.name}(). Supported: string, number, boolean, date, array, enum, union, literal, object`)
+        this.error(`Unsupported Zod method: z.${method.name}(). Supported: string, number, boolean, date, array, enum, union, literal, object, discriminatedUnion`)
     }
+  }
+
+  private parseDiscriminatedUnionContent(): { kind: 'union', types: FieldType[] } {
+    this.expectPunct('(') || this.error('Expected "(" after z.discriminatedUnion')
+    // Consume the discriminator key (e.g. "type")
+    this.expect('string') || this.error('Expected string literal discriminator key in z.discriminatedUnion')
+    this.expectPunct(',') || this.error('Expected "," after discriminator key')
+    this.expectPunct('[') || this.error('Expected "[" for union types')
+    
+    const types: FieldType[] = []
+    while (!this.peek('punct', ']')) {
+      if (this.peek('eof')) this.error('Unexpected end of input while parsing discriminatedUnion types')
+      if (types.length > 0) {
+        this.expectPunct(',') || this.error('Expected "," between union members')
+      }
+      if (this.peek('punct', ']')) break
+      types.push(this.parseType())
+    }
+    this.expectPunct(']') || this.error('Expected "]" after union types')
+    this.expectPunct(')') || this.error('Expected ")" to close z.discriminatedUnion()')
+    
+    if (types.length === 0) {
+      this.error('z.discriminatedUnion() must have at least one type')
+    }
+    return { kind: 'union', types }
   }
 
   private parseZ(): void {
