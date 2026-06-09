@@ -552,6 +552,53 @@ class Parser {
 }
 
 // ---------------------------------------------------------------------------
+// User-friendly error detection
+// ---------------------------------------------------------------------------
+
+function detectNonZodInput(tokens: Token[]): string | null {
+  let i = 0
+  while (i < tokens.length && tokens[i].kind === 'identifier') {
+    const name = (tokens[i] as { name: string }).name
+    if (name === 'export') {
+      i++
+      continue
+    }
+    if (name === 'import') {
+      while (i < tokens.length && tokens[i].kind !== 'eof') {
+        if (tokens[i].kind === 'punct' && (tokens[i] as { char: string }).char === ';') {
+          i++
+          break
+        }
+        i++
+      }
+      continue
+    }
+    break
+  }
+  if (i < tokens.length && tokens[i].kind === 'identifier') {
+    const keyword = (tokens[i] as { name: string }).name
+    const typeKeywords: Record<string, string> = {
+      interface: 'interface',
+      type: 'type',
+      class: 'class',
+      enum: 'enum',
+    }
+    const detected = typeKeywords[keyword]
+    if (detected) return detected
+  }
+  if (i < tokens.length && tokens[i].kind === 'punct' && (tokens[i] as { char: string }).char === '{') {
+    return 'objectLiteral'
+  }
+  for (let j = 0; j < tokens.length - 1; j++) {
+    if (tokens[j].kind === 'identifier' && (tokens[j] as { name: string }).name === 'z' &&
+        tokens[j + 1].kind === 'punct' && (tokens[j + 1] as { char: string }).char === '.') {
+      return null
+    }
+  }
+  return 'noZodSchema'
+}
+
+// ---------------------------------------------------------------------------
 // Public API
 // ---------------------------------------------------------------------------
 
@@ -576,6 +623,19 @@ export function parseZod(source: string): ParseResult {
   const tokenResult = tokenize(source)
   if (tokenResult.kind === 'error') {
     return { ok: false, error: `Invalid input: ${tokenResult.message}` }
+  }
+
+  const misinput = detectNonZodInput(tokenResult.tokens)
+  if (misinput) {
+    const messages: Record<string, string> = {
+      interface: 'This looks like a TypeScript interface. FixtureKit needs a Zod schema (e.g. z.object({ ... })) — see the docs for examples.',
+      type: 'This looks like a TypeScript type alias. FixtureKit needs a Zod schema (e.g. z.object({ ... })) — see the docs for examples.',
+      class: 'This looks like a TypeScript class. FixtureKit needs a Zod schema (e.g. z.object({ ... })) — see the docs for examples.',
+      enum: 'This looks like a TypeScript enum. FixtureKit needs a Zod schema (e.g. z.object({ ... })) — see the docs for examples.',
+      objectLiteral: 'This looks like a plain object literal. FixtureKit needs a Zod schema (e.g. z.object({ ... })) — see the docs for examples.',
+      noZodSchema: 'No Zod schema found. FixtureKit needs a Zod schema (e.g. z.object({ ... })) — see the docs for examples.',
+    }
+    return { ok: false, error: messages[misinput] }
   }
 
   try {
