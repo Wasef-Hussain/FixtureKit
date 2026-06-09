@@ -2,6 +2,8 @@
 
 **Generate fixtures, mocks, and test data from TypeScript and Zod schemas.**
 
+![FixtureKit Demo](demo/demo.gif)
+
 **Live:** https://fixture-kit.vercel.app · **GitHub:** https://github.com/Wasef-Hussain/FixtureKit
 
 FixtureKit is a browser-based tool that generates realistic mock data from your type definitions — no libraries, no setup, no backend. Everything runs in your browser.
