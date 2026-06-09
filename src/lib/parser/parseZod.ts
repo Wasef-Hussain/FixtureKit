@@ -68,7 +68,7 @@ function tokenize(input: string): { kind: 'ok'; tokens: Token[] } | { kind: 'err
     }
 
     // Punctuation
-    if ('{}[]().,:=;'.includes(ch)) {
+    if ('{}[]().,:=;<>|&?!+-*/'.includes(ch)) {
       tokens.push({ kind: 'punct', char: ch })
       i++
       continue
@@ -214,31 +214,32 @@ class Parser {
 
   // Parse a full Zod schema: z.object({ ... })
   parseSchema(): { fields: Field[], rootName: string } {
-    let rootName = ROOT_NAME
+    let finalRootName = ROOT_NAME
+    let lastSchemaStart = 0
+    let currentVarName = ROOT_NAME
     
-    // Skip imports
-    while (this.peek('identifier', 'import')) {
-      this.consume()
-      while (!this.peek('eof') && !this.peek('punct', ';')) {
-        this.consume()
+    // Scan tokens to find the last z.object or z.discriminatedUnion in the file
+    for (let i = 0; i < this.tokens.length - 2; i++) {
+      const t = this.tokens[i]
+      if (t.kind === 'identifier' && (t.name === 'const' || t.name === 'let' || t.name === 'var')) {
+        const next = this.tokens[i+1]
+        if (next && next.kind === 'identifier') {
+          currentVarName = next.name
+        }
       }
-      this.expectPunct(';')
+      
+      const t1 = this.tokens[i]
+      const t2 = this.tokens[i+1]
+      const t3 = this.tokens[i+2]
+      if (t1.kind === 'identifier' && t1.name === 'z' &&
+          t2.kind === 'punct' && (t2 as any).char === '.' &&
+          t3.kind === 'identifier' && (t3.name === 'object' || t3.name === 'discriminatedUnion')) {
+        lastSchemaStart = i
+        finalRootName = currentVarName
+      }
     }
 
-    // Optional variable assignment:
-    // export const MySchema = z.object(...)
-    // const MySchema = z.object(...)
-    if (this.peek('identifier', 'export')) {
-      this.consume()
-    }
-    if (this.peek('identifier', 'const') || this.peek('identifier', 'let') || this.peek('identifier', 'var') || this.peek('identifier', 'type')) {
-      this.consume()
-      const nameToken = this.expect('identifier') as { kind: 'identifier'; name: string } | null
-      if (nameToken) {
-        rootName = nameToken.name
-        this.expectPunct('=') // optionally consume "="
-      }
-    }
+    this.pos = lastSchemaStart
 
     this.parseZ()
     this.expectPunct('.') || this.error('Expected z.object(...)')
@@ -263,10 +264,7 @@ class Parser {
       this.error('Expected z.object(...) or z.discriminatedUnion(...) at the top level')
     }
     
-    // Optional trailing semicolon
-    while (this.expectPunct(';')) {}
-    
-    return { fields, rootName }
+    return { fields, rootName: finalRootName }
   }
 
   // z.object({ ... })
@@ -359,6 +357,13 @@ class Parser {
 
   // Parse a type expression: z.string(), z.number(), z.array(...), z.object({...}), etc.
   private parseType(): FieldType {
+    if (this.peek('identifier') && !this.peek('identifier', 'z')) {
+      // This is a custom identifier reference (e.g. user: HackathonUser)
+      // We consume it and gracefully degrade to an unknown type rather than crashing.
+      this.consume()
+      return { kind: 'unknown' }
+    }
+
     this.parseZ()
     this.expectPunct('.') || this.error('Expected z.methodName(...)')
 
@@ -575,14 +580,11 @@ export function parseZod(source: string): ParseResult {
 
   try {
     const parser = new Parser(tokenResult.tokens)
-    const { fields } = parser.parseSchema()
-
-    // After parsing the top-level schema, check for unexpected trailing content
-    // other than whitespace/comments (which tokenizer already strips).
+    const { fields, rootName } = parser.parseSchema()
 
     return {
       ok: true,
-      rootName: ROOT_NAME,
+      rootName,
       fields,
     }
   } catch (e) {

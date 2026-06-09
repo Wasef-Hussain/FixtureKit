@@ -79,22 +79,22 @@ export default function InputPane({ value, onChange, mode, onModeChange, error, 
         <div style={styles.errorBanner}>
           <div style={styles.errorHeader}>
             <span style={styles.errorIcon}>!</span>
-            {error}
-          </div>
-          <div style={styles.feedbackBox}>
-            <p style={styles.feedbackText}>
-              <strong>Schema failed?</strong> Help improve FixtureKit by submitting the schema that broke it.
-            </p>
-            <a 
-              href={`https://github.com/Wasef-Hussain/FixtureKit/issues/new?title=Parser+Failure&body=${encodeURIComponent(
-                `**Error Message:**\n\`${error}\`\n\n**Environment:**\n- Browser: ${typeof window !== 'undefined' ? window.navigator.userAgent : 'Unknown'}\n- Version: 0.1.0\n\n**Failing Schema (Optional - please remove proprietary info):**\n\`\`\`ts\n\n\`\`\``
-              )}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              style={styles.feedbackBtn}
-            >
-              Report Issue on GitHub
-            </a>
+            <span>
+              {error}
+              <span style={{ display: 'block', marginTop: '6px', fontSize: '11.5px', opacity: 0.85 }}>
+                <strong>Schema failed?</strong>{' '}
+                <a 
+                  href={`https://github.com/Wasef-Hussain/FixtureKit/issues/new?title=Parser+Failure&body=${encodeURIComponent(
+                    `**Error Message:**\n\`${error}\`\n\n**Environment:**\n- Browser: ${typeof window !== 'undefined' ? window.navigator.userAgent : 'Unknown'}\n- Version: 0.1.0\n\n**Failing Schema (Optional - please remove proprietary info):**\n\`\`\`ts\n${value.slice(0, 1500)}${value.length > 1500 ? '\n... (truncated)' : ''}\n\`\`\``
+                  )}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ color: 'inherit', textDecoration: 'underline' }}
+                >
+                  Report it on GitHub
+                </a>
+              </span>
+            </span>
           </div>
         </div>
       )}
@@ -190,33 +190,7 @@ const styles: Record<string, React.CSSProperties> = {
     alignItems: 'flex-start',
     gap: '10px',
   },
-  feedbackBox: {
-    marginTop: '4px',
-    paddingTop: '12px',
-    borderTop: '1px solid #fecaca',
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '8px',
-  },
-  feedbackText: {
-    margin: 0,
-    fontSize: '12.5px',
-    color: '#b91c1c',
-  },
-  feedbackBtn: {
-    display: 'inline-flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: '6px 12px',
-    background: '#dc2626',
-    color: '#fff',
-    textDecoration: 'none',
-    borderRadius: radius.sm,
-    fontWeight: 600,
-    fontSize: '12px',
-    width: 'fit-content',
-    boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
-  },
+
   errorIcon: {
     display: 'inline-flex',
     alignItems: 'center',
